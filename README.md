@@ -79,4 +79,4 @@ This is a modern React frontend (Vite + Material-UI) with mock data for the chal
 ---
 
 Powered by **React + Vite + Material-UI**.
-A complete demo for the **Microsoft Hackathon Nov 2025 Challenge**.
+A demo for the **Microsoft Hackathon Nov 2025 Challenge**.
