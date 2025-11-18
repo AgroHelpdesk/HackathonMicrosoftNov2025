@@ -2,6 +2,8 @@
 
 This is a modern React frontend (Vite + Material-UI) with mock data for the challenge **"Auto-resolve Service Desk for Agribusiness and Agriculture"**.
 
+![Tela Workflow](Screen.png)
+
 ## 🚀 Features
 
 * **Main Dashboard**: Ticket list with agents, runbooks, and interactive details.
