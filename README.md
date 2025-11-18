@@ -1,115 +1,80 @@
-# Hackathon Microsoft Nov 2025 - Help Desk para Agricultura
+# Agro Auto-Resolve Frontend 
 
-## Descrição
+This is a modern React frontend (Vite + Material-UI) with mock data for the challenge **"Auto-resolve Service Desk for Agribusiness and Agriculture"**.
 
-Este projeto é uma **Central Inteligente de Atendimento Agrícola** com Múltiplos Agentes e Automação Segura, desenvolvida para o Hackathon Microsoft. Ele visa resolver chamados repetitivos em agroindústrias, cooperativas e fazendas corporativas através de agentes inteligentes baseados em IA.
+## 🚀 Features
 
-### Problema
-Grandes agroindústrias, cooperativas e fazendas corporativas possuem centenas de chamados repetitivos diariamente, como:
-- “Minha plantadeira está com falha no sensor, e agora?”
-- “Preciso de um laudo agronômico urgente.”
-- “O estoque de fertilizantes está baixo.”
-- “Quero saber qual praga está atacando meu milho.”
+* **Main Dashboard**: Ticket list with agents, runbooks, and interactive details.
+* **Chat Simulation**: Mock conversations based on the challenge examples (WhatsApp/Teams style).
+* **Metrics Dashboard**: KPIs such as ticket reduction, response time, accuracy, symptom ranking.
+* **Field Plot Map**: Interactive Leaflet map showing plots with markers and popups (active alerts).
+* **Full Transparency**: Step-by-step logs for each agent in each ticket.
+* **Navigation**: React Router with multiple pages.
 
-### Solução
-Uma plataforma que utiliza agentes de IA para automatizar o atendimento, coletar informações e resolver problemas de forma segura e eficiente.
+## 🧠 Demonstrated Agents
 
-## Agentes da Solução
+* **FieldSense** (Intent): Classifies user requests.
+* **FarmOps** (Info Collector): Gathers missing information.
+* **AgroBrain** (Knowledge): Queries knowledge bases.
+* **RunbookMaster** (Decision): Chooses automation or escalation.
+* **ExplainIt** (Transparency): Explains each step taken.
 
-1. **Intent Agent** – Identificação da Solicitação  
-   Analisa mensagem, foto, áudio ou texto e classifica:  
-   - Diagnóstico de campo  
-   - Equipamento agrícola  
-   - Estoque de insumos  
-   - Laudos/ART  
-   - Conformidade com a Legislação  
-   - Clima e irrigação  
-   - Financeiro / comercial da cooperativa  
-   - Licenças Ambientais  
+## ⚙️ Mock Runbooks
 
-2. **Info Collector Agent** – Coletor de Informações Faltantes  
-   Pede detalhes automaticamente: talhão, cultura, idade da planta, foto da folha/colmo/solo, etc.
+* **RB-01**: Generate pest report (Safe).
+* **RB-02**: Open urgent work order (Critical).
+* **RB-03**: Inventory check (Safe).
+* **RB-04**: Pre-fill ART report (Critical).
 
-3. **Resolver Agent** – Agente Resolvidos  
-   Resolve automaticamente consultas simples usando bases de conhecimento e dados históricos.
+## 📊 Mock Metrics
 
-4. **Escalation Agent** – Agente de Escalação  
-   Escala para humanos quando necessário, com contexto completo.
+* Ticket reduction: **65%**
+* Average resolution time: **12 minutes**
+* Classification accuracy: **92%**
+* Escalated: **8%**
 
-5. **Feedback Agent** – Agente de Feedback  
-   Coleta feedback para melhorar o sistema.
+## 🗺️ Field Plot Map
 
-## Estrutura do Projeto
+* Integrated with Leaflet (OpenStreetMap tiles).
+* Markers for each plot with popups showing ID, crop, and status.
+* Visual alerts: Normal (green), Pest/Maintenance (yellow/red).
+* Ready for integration with GPS or weather APIs.
 
-- `challenge.txt`: Descrição completa do desafio.
-- `dataset/`: Datasets em CSV fornecidos para o projeto.
-  - `agrofitprodutostecnicos.csv`
-  - `basedeconhecimentoMAPA.csv`
-  - `sipeagrofertilizante.csv`
-  - `sipeagroqualidadevegetal.csv`
-- `web-frontend/`: Aplicação frontend em React (usando Vite) para o painel de controle.
-  - Inclui componentes como Dashboard, Chat, MapView, etc.
-- `backend/`: (A ser implementado) Backend em Python utilizando Azure Services (Blob Storage, Functions, etc.).
+## 💻 How to Run (PowerShell — Windows)
 
-## Instalação e Configuração
+1. Enter folder:
+   `cd e:\projects\HackathonMicrosoftNov2025\web-frontend`
+2. Install:
+   `npm install`
+3. Development mode:
+   `npm run dev` (opens [http://localhost:5173](http://localhost:5173))
+4. Build:
+   `npm run build && npm run preview`
 
-### Pré-requisitos
-- Node.js (para o frontend)
-- Python (para o backend)
-- Conta Azure (para serviços na nuvem)
+## 🎨 Design
 
-### Frontend
-1. Navegue para a pasta `web-frontend/`:
-   ```
-   cd web-frontend
-   ```
-2. Instale as dependências:
-   ```
-   npm install
-   ```
-3. Execute o servidor de desenvolvimento:
-   ```
-   npm run dev
-   ```
-4. Acesse `http://localhost:5173` no navegador.
+* Material-UI theme with agricultural-green tones.
+* Responsive layout with a side Drawer.
+* Cards, Chips, and Progress Bars for rich visualization.
 
-### Backend
-O backend ainda não está implementado. Planeja-se usar:
-- Azure Blob Storage para armazenar os datasets.
-- Azure Functions para APIs em Python.
-- Pandas para processamento de dados.
+## 🔧 Suggested Next Steps
 
-Para implementar:
-1. Crie uma Azure Function App.
-2. Configure Blob Storage e faça upload dos CSVs.
-3. Implemente funções para consumir os dados via API.
+* Integrate real APIs (telemetry, ERP, weather).
+* Add authentication (roles: operator, agronomist, admin).
+* Upload real images for diagnostics.
+* Push notifications for alerts.
+* Integrate WhatsApp API for real chat automation.
+* Persistence with backend (Node.js/Express or Azure Functions).
+* Improve map: clusters, pest heatmaps, IoT sensor integration.
 
-## Uso
+## 📁 Structure
 
-1. No frontend, visualize tickets ativos no Dashboard.
-2. Selecione um ticket para ver detalhes e histórico de agentes.
-3. Use o chat para interagir com clientes.
-4. Resolva ou escale tickets conforme necessário.
+* `src/App.jsx`: Routes and theme.
+* `src/components/`: Dashboard, Chat, Metrics, MapView, TicketCard.
+* `src/mockData.js`: Mock data (tickets, agents, metrics, plots).
+* `public/images/`: Placeholder images.
 
-## Tecnologias Utilizadas
+---
 
-- **Frontend**: React, Material-UI, Vite
-- **Backend**: Python, Azure Functions, Azure Blob Storage
-- **Dados**: Pandas, CSV
-- **IA**: Agentes baseados em modelos de IA (a implementar)
-
-## Contribuição
-
-1. Fork o repositório.
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`).
-3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`).
-4. Push para a branch (`git push origin feature/nova-feature`).
-5. Abra um Pull Request.
-
-## Licença
-
-Este projeto é para fins educacionais no Hackathon Microsoft. Consulte os termos do hackathon para uso.
-
-## Contato
-
-Para dúvidas, entre em contato com a equipe do projeto.
+Powered by **React + Vite + Material-UI**.
+A complete demo for the **Microsoft Hackathon Nov 2025 Challenge**.
