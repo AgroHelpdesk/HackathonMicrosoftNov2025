@@ -1,0 +1,24 @@
+# Task List
+
+- [x] Planning Phase
+    - [x] Explore existing project structure
+    - [x] Create Implementation Plan for Azure Migration
+    - [x] Review Implementation Plan with User
+- [x] Phase 1: Foundation (Infrastructure Scripts)
+    - [x] Create `infrastructure` directory
+    - [x] Write `deploy_resources.ps1` (Azure CLI commands)
+    - [x] Write `configure_settings.json` (Resource names/regions)
+    - [x] Verify script logic (Dry run / Review)
+- [ ] Phase 2: Data Ingestion
+    - [ ] Upload Dataset to Blob Storage
+    - [ ] Implement Indexing Pipeline (Document Intelligence + AI Search)
+    - [ ] Verify Search Results
+- [ ] Phase 3: Agent Logic
+    - [ ] Implement Chat API
+    - [ ] Integrate RAG (AgroBrain)
+    - [ ] Implement Intent Classification (FieldSense)
+    - [ ] Implement Decision Logic (RunbookMaster)
+- [ ] Phase 4: Frontend Wiring
+    - [ ] Create API Client Service
+    - [ ] Replace Mock Data with API Calls
+    - [ ] Implement Authentication (MSAL)

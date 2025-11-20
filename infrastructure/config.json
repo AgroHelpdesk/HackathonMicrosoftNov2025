@@ -1,0 +1,16 @@
+{
+  "location": "eastus2",
+  "resourceGroupName": "rg-agro-autoresolve-dev",
+  "storageAccountName": "stagroautoresolve001",
+  "cosmosDbAccountName": "cosmos-agro-autoresolve",
+  "cosmosDbDatabaseName": "AgroServiceDesk",
+  "openAiServiceName": "oai-agro-autoresolve",
+  "aiSearchServiceName": "search-agro-autoresolve",
+  "staticWebAppName": "swa-agro-autoresolve",
+  "functionAppName": "func-agro-autoresolve",
+  "appServicePlanName": "asp-agro-autoresolve",
+  "tags": {
+    "Project": "AgroAutoResolve",
+    "Environment": "Development"
+  }
+}
