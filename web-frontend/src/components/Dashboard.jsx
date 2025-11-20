@@ -3,19 +3,23 @@ import {
   Grid, Card, CardContent, CardActions, Button, Chip, Typography, Box, List, ListItem, ListItemText, Divider, Container, Stack, Stepper, Step, StepLabel, Avatar
 } from '@mui/material'
 import { CheckCircle, HourglassEmpty, Visibility } from '@mui/icons-material'
-import { TICKETS } from '../mockData'
+import { api } from '../services/api'
 import TicketCard from './TicketCard'
 import Chat from './Chat'
 
 export default function Dashboard() {
-  const [tickets, setTickets] = useState(TICKETS)
+  const [tickets, setTickets] = useState([])
   const [selected, setSelected] = useState(null)
 
+  useEffect(() => {
+    api.getTickets().then(setTickets)
+  }, [])
+
   const DASHBOARD_STEPS = [
-  { id: 'open', label: 'Open', value: tickets.filter(t => t.status === 'open').length, color: 'warning', icon: HourglassEmpty },
-  { id: 'resolved', label: 'Resolved', value: tickets.filter(t => t.status === 'resolved').length, color: 'success', icon: CheckCircle },
-  { id: 'escalated', label: 'Escalated', value: tickets.filter(t => t.status === 'escalated').length, color: 'error', icon: Visibility }
-]
+    { id: 'open', label: 'Open', value: tickets.filter(t => t.status === 'open').length, color: 'warning', icon: HourglassEmpty },
+    { id: 'resolved', label: 'Resolved', value: tickets.filter(t => t.status === 'resolved').length, color: 'success', icon: CheckCircle },
+    { id: 'escalated', label: 'Escalated', value: tickets.filter(t => t.status === 'escalated').length, color: 'error', icon: Visibility }
+  ]
 
   function resolveTicket(id, action) {
     setTickets(prev => prev.map(t => t.id === id ? { ...t, status: action } : t))

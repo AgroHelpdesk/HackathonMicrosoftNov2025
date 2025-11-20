@@ -5,6 +5,7 @@ import {
 } from '@mui/material'
 import { Send } from '@mui/icons-material'
 import { colors, spacing, borderRadius, shadows, gradients, typography, components } from '../theme/designSystem'
+import { api } from '../services/api'
 
 const mockConversations = {
   'T-001': [
@@ -26,18 +27,23 @@ export default function Chat({ ticketId: propTicketId, compact = false }) {
   const [messages, setMessages] = useState(mockConversations[ticketId] || [])
   const [newMessage, setNewMessage] = useState('')
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (newMessage.trim()) {
-      setMessages([...messages, { sender: 'user', text: newMessage, ts: new Date().toISOString() }])
+      const userMsg = { sender: 'user', text: newMessage, ts: new Date().toISOString() }
+      setMessages(prev => [...prev, userMsg])
       setNewMessage('')
-      // Mock agent response
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
+
+      try {
+        const response = await api.sendMessage(newMessage, ticketId)
+        const agentMsg = {
           sender: 'agent',
-          text: 'Thank you for the information. I am processing with the agents...',
-          ts: new Date().toISOString()
-        }])
-      }, 2000)
+          text: response.response,
+          ts: response.ts
+        }
+        setMessages(prev => [...prev, agentMsg])
+      } catch (error) {
+        console.error("Error sending message:", error)
+      }
     }
   }
 
