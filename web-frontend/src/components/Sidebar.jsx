@@ -6,7 +6,7 @@ import {
 import {
   Dashboard as DashboardIcon, Chat as ChatIcon, BarChart as MetricsIcon, Map as MapIcon,
   BugReport, Build, Hub as WorkflowIcon, ExpandLess, ExpandMore, SmartToy, MenuBook,
-  Menu as MenuIcon
+  Menu as MenuIcon, Visibility, Message
 } from '@mui/icons-material';
 import { AGENTS, RUNBOOKS } from '../mockData';
 
@@ -15,7 +15,9 @@ const miniDrawerWidth = 72;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Workflow',  icon: <WorkflowIcon />, path: '/workflow' },
+  { text: 'Workflow', icon: <WorkflowIcon />, path: '/workflow' },
+  { text: 'ACS Chat', icon: <Message />, path: '/acs-chat' },
+  { text: 'Transparency', icon: <Visibility />, path: '/transparency' },
   { text: 'Metrics', icon: <MetricsIcon />, path: '/metrics' },
   { text: 'Map', icon: <MapIcon />, path: '/map' }
 ];
@@ -74,15 +76,15 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
       <List sx={{ px: 1 }} role="navigation" aria-label="Main menu">
         {menuItems.map((item) => (
           <Tooltip key={item.text} title={item.text} placement="right" arrow>
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={() => handleItemClick(item.path)}
               sx={{
                 borderRadius: '8px',
                 mb: 0.5,
                 justifyContent: mobileOpen ? 'flex-start' : 'center',
                 px: mobileOpen ? 2 : 0,
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: 'sidebar.hover'
                 },
                 transition: 'all 0.2s ease'
@@ -90,8 +92,8 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: mobileOpen ? 40 : 'auto', justifyContent: 'center' }}>{item.icon}</ListItemIcon>
               {mobileOpen && (
-                <ListItemText 
-                  primary={item.text} 
+                <ListItemText
+                  primary={item.text}
                   primaryTypographyProps={{ sx: { fontWeight: 500, fontSize: '0.875rem', color: 'white' } }}
                 />
               )}
@@ -103,32 +105,32 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
       {mobileOpen && (
         <>
           <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-          
+
           {/* Seção de Agentes */}
           <List sx={{ px: 1 }}>
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={() => setExpandAgents(!expandAgents)}
               sx={{ borderRadius: '8px', mb: 0.5, '&:hover': { backgroundColor: 'sidebar.hover' } }}
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                 <SmartToy />
               </ListItemIcon>
-              <ListItemText 
-                primary="Agents" 
+              <ListItemText
+                primary="Agents"
                 primaryTypographyProps={{ sx: { fontWeight: 600, fontSize: '0.875rem', color: "white" } }}
               />
               {expandAgents ? <ExpandLess sx={{ fontSize: '1.2rem', color: "white" }} /> : <ExpandMore sx={{ fontSize: '1.2rem', color: "white" }} />}
             </ListItem>
-            
+
             <Collapse in={expandAgents} timeout="auto" unmountOnExit>
               {AGENTS.map(a => (
                 <ListItem key={a.id} sx={{ pl: 4, py: 0.75 }}>
                   <Avatar sx={{ mr: 1.5, width: 28, height: 28, fontSize: '0.75rem', bgcolor: 'secondary.main' }}>
                     {a.name[0]}
                   </Avatar>
-                  <ListItemText 
-                    primary={a.name} 
+                  <ListItemText
+                    primary={a.name}
                     secondary={a.role}
                     primaryTypographyProps={{ sx: { fontSize: '0.8rem', fontWeight: 500, color: 'inherit' } }}
                     secondaryTypographyProps={{ sx: { fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' } }}
@@ -139,31 +141,31 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
           </List>
 
           <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-          
+
           {/* Seção de Runbooks */}
           <List sx={{ px: 1 }}>
-            <ListItem 
-              button 
+            <ListItem
+              button
               onClick={() => setExpandRunbooks(!expandRunbooks)}
               sx={{ borderRadius: '8px', mb: 0.5, '&:hover': { backgroundColor: 'sidebar.hover' } }}
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                 <MenuBook />
               </ListItemIcon>
-              <ListItemText 
-                primary="Runbooks" 
+              <ListItemText
+                primary="Runbooks"
                 primaryTypographyProps={{ sx: { fontWeight: 600, fontSize: '0.875rem', color: "white" } }}
               />
               {expandRunbooks ? <ExpandLess sx={{ fontSize: '1.2rem' }} /> : <ExpandMore sx={{ fontSize: '1.2rem' }} />}
             </ListItem>
-            
+
             <Collapse in={expandRunbooks} timeout="auto" unmountOnExit>
               {RUNBOOKS.map(r => (
                 <ListItem key={r.id} sx={{ pl: 4, py: 0.75 }}>
                   <ListItemIcon sx={{ color: r.safe ? 'success.main' : 'warning.main', minWidth: 32 }}>
                     {r.safe ? <BugReport fontSize="small" /> : <Build fontSize="small" />}
                   </ListItemIcon>
-                  <ListItemText 
+                  <ListItemText
                     primary={r.name}
                     secondary={r.safe ? '✓ Safe' : '⚠ Critical'}
                     primaryTypographyProps={{ sx: { fontSize: '0.8rem', fontWeight: 500, color: 'inherit' } }}
@@ -179,14 +181,14 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
       {!mobileOpen && (
         <>
           <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-          
+
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
             <Tooltip title="Agents" placement="right" arrow>
               <IconButton sx={{ color: 'white' }}>
                 <SmartToy />
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title="Runbooks" placement="right" arrow>
               <IconButton sx={{ color: 'white' }}>
                 <MenuBook />
@@ -211,7 +213,7 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
           width: mobileOpen ? drawerWidth : miniDrawerWidth,
           flexShrink: 0,
           zIndex: theme.zIndex.appBar - 1, // Abaixo do AppBar
-          '& .MuiDrawer-paper': { 
+          '& .MuiDrawer-paper': {
             width: mobileOpen ? drawerWidth : miniDrawerWidth,
             boxSizing: 'border-box',
             transition: 'width 0.2s ease',

@@ -18,6 +18,8 @@ import Chat from './components/Chat'
 import Metrics from './components/Metrics'
 import MapView from './components/MapView'
 import AgentWorkflow from './components/AgentWorkflow'
+import ACSChat from './components/ACSChat'
+import TransparencyPanel from './components/TransparencyPanel'
 import Sidebar from './components/Sidebar'
 import theme from './theme/theme'
 
@@ -100,6 +102,8 @@ function AppShell() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/chat/:ticketId" element={<Chat />} />
+              <Route path="/acs-chat" element={<ACSChat />} />
+              <Route path="/transparency" element={<TransparencyPanel />} />
               <Route path="/metrics" element={<Metrics />} />
               <Route path="/map" element={<MapView />} />
               <Route path="/workflow" element={<AgentWorkflow />} />

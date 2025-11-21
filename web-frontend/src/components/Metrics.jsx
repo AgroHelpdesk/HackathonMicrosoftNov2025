@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
-  Box, Grid, Card, CardContent, Typography, LinearProgress, List, ListItem, ListItemText
+  Box, Grid, Card, CardContent, Typography, LinearProgress, List, ListItem, ListItemText, Chip, Avatar
 } from '@mui/material'
-import { TrendingDown, AccessTime, CheckCircle, Warning } from '@mui/icons-material'
+import { TrendingDown, AccessTime, CheckCircle, Warning, SmartToy, Speed } from '@mui/icons-material'
 import { METRICS } from '../mockData'
 
 const metrics = [
@@ -13,6 +13,16 @@ const metrics = [
 ]
 
 export default function Metrics() {
+  const [agentMetrics, setAgentMetrics] = useState(null)
+
+  useEffect(() => {
+    // Fetch agent metrics from API
+    fetch('/api/agents/metrics')
+      .then(res => res.json())
+      .then(data => setAgentMetrics(data))
+      .catch(err => console.error('Error fetching agent metrics:', err))
+  }, [])
+
   return (
     <Box>
       <Box sx={{ mb: { xs: 3, sm: 4 } }}>
@@ -23,6 +33,7 @@ export default function Metrics() {
           Visualize performance and impact of automatic resolution
         </Typography>
       </Box>
+
       <Grid container spacing={{ xs: 2, md: 3 }}>
         {metrics.map((metric, i) => (
           <Grid item xs={12} sm={6} lg={3} key={i}>
@@ -78,6 +89,60 @@ export default function Metrics() {
             </Card>
           </Grid>
         ))}
+
+        {/* Agent Performance Metrics */}
+        {agentMetrics && (
+          <Grid item xs={12}>
+            <Card sx={{ border: `1px solid #e0e0e0`, background: 'linear-gradient(135deg, rgba(95,167,119,0.08) 0%, rgba(44,95,111,0.06) 100%)', boxShadow: '0 8px 24px rgba(44, 95, 111, 0.08)' }}>
+              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#1b5e20', fontSize: '1.15rem' }}>
+                  🤖 Multi-Agent System Performance
+                </Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(agentMetrics).map(([agentName, metrics]) => (
+                    <Grid item xs={12} sm={6} md={4} key={agentName}>
+                      <Box sx={{
+                        p: 2,
+                        border: '1px solid rgba(27, 94, 32, 0.2)',
+                        borderRadius: 2,
+                        background: 'rgba(255, 255, 255, 0.8)'
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                          <Avatar sx={{ bgcolor: '#2e7d32', width: 32, height: 32 }}>
+                            <SmartToy sx={{ fontSize: '1rem' }} />
+                          </Avatar>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {agentName}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary">Total Requests</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 600 }}>{metrics.total_requests}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary">Success Rate</Typography>
+                          <Chip
+                            label={`${Math.round(metrics.success_rate)}%`}
+                            size="small"
+                            color={metrics.success_rate > 90 ? 'success' : 'warning'}
+                            sx={{ height: 18, fontSize: '0.7rem' }}
+                          />
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="text.secondary">Avg Time</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                            {Math.round(metrics.avg_processing_time_ms)}ms
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
         <Grid item xs={12}>
           <Card sx={{ border: `1px solid #e0e0e0`, background: 'linear-gradient(135deg, rgba(95,167,119,0.08) 0%, rgba(44,95,111,0.06) 100%)', boxShadow: '0 8px 24px rgba(44, 95, 111, 0.08)' }}>
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
