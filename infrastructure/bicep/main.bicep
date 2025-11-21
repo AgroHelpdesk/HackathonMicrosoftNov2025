@@ -252,6 +252,18 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'STORAGE_CONNECTION_STRING'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
         }
+        {
+          name: 'ACS_CONNECTION_STRING'
+          value: communicationServices.outputs.communicationServiceConnectionString
+        }
+        {
+          name: 'ACS_ENDPOINT'
+          value: communicationServices.outputs.communicationServiceEndpoint
+        }
+        {
+          name: 'KEY_VAULT_URI'
+          value: keyVault.outputs.keyVaultUri
+        }
       ]
       cors: {
         allowedOrigins: corsAllowedOrigins
@@ -389,6 +401,46 @@ resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
 }
 
 // ============================================================================
+// Azure Communication Services
+// ============================================================================
+module communicationServices 'modules/communication-services.bicep' = {
+  name: 'communication-services-deployment'
+  params: {
+    projectName: projectName
+    environment: environment
+    location: location
+    tags: tags
+  }
+}
+
+// ============================================================================
+// Azure Key Vault
+// ============================================================================
+module keyVault 'modules/key-vault.bicep' = {
+  name: 'key-vault-deployment'
+  params: {
+    projectName: projectName
+    environment: environment
+    location: location
+    tags: tags
+    functionAppPrincipalId: functionApp.identity.principalId
+  }
+}
+
+// ============================================================================
+// Azure Automation
+// ============================================================================
+module automation 'modules/automation.bicep' = {
+  name: 'automation-deployment'
+  params: {
+    projectName: projectName
+    environment: environment
+    location: location
+    tags: tags
+  }
+}
+
+// ============================================================================
 // Outputs
 // ============================================================================
 output resourceGroupName string = resourceGroup().name
@@ -410,3 +462,17 @@ output searchServiceKey string = searchService.listAdminKeys().primaryKey
 output applicationInsightsInstrumentationKey string = applicationInsights.properties.InstrumentationKey
 @secure()
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
+
+// Communication Services Outputs
+output communicationServiceName string = communicationServices.outputs.communicationServiceName
+output communicationServiceEndpoint string = communicationServices.outputs.communicationServiceEndpoint
+@secure()
+output communicationServiceConnectionString string = communicationServices.outputs.communicationServiceConnectionString
+output emailDomainName string = communicationServices.outputs.emailDomainName
+
+// Key Vault Outputs
+output keyVaultName string = keyVault.outputs.keyVaultName
+output keyVaultUri string = keyVault.outputs.keyVaultUri
+
+// Automation Outputs
+output automationAccountName string = automation.outputs.automationAccountName

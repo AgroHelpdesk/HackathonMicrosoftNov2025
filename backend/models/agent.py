@@ -1,7 +1,7 @@
 """
 Agent Model - Modelo de dados para agentes
 """
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 

@@ -4,56 +4,65 @@ Azure Functions App - Agro Auto-Resolve Backend
 import azure.functions as func
 import logging
 import json
-from datetime import datetime
 
-# Importar funções
+# Import blueprints
 from functions.tickets import bp as tickets_bp
 from functions.chat import bp as chat_bp
-from functions.agents import bp as agents_bp
-from functions.search import bp as search_bp
+from functions.acs_chat import bp as acs_chat_bp
+from functions.acs_sms import bp as acs_sms_bp
+from functions.agents_api import bp as agents_bp
 
-# Criar app
+# Initialize Function App
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-# Registrar blueprints
+# Register blueprints
 app.register_functions(tickets_bp)
 app.register_functions(chat_bp)
+app.register_functions(acs_chat_bp)
+app.register_functions(acs_sms_bp)
 app.register_functions(agents_bp)
-app.register_functions(search_bp)
+
+logging.info("Function App initialized with 5 blueprints")
 
 
-@app.route(route="health", methods=["GET"])
+@app.route(route="health", auth_level=func.AuthLevel.ANONYMOUS)
 def health_check(req: func.HttpRequest) -> func.HttpResponse:
     """Health check endpoint"""
-    logging.info('Health check requested')
+    logging.info("Health check endpoint called")
     
     return func.HttpResponse(
         json.dumps({
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "service": "agro-autoresolve-backend",
-            "version": "1.0.0"
+            "service": "Agro Auto-Resolve API",
+            "version": "2.0.0",
+            "blueprints": ["tickets", "chat", "acs_chat", "acs_sms", "agents"]
         }),
-        mimetype="application/json",
-        status_code=200
+        status_code=200,
+        mimetype="application/json"
     )
 
 
-@app.route(route="", methods=["GET"])
+@app.route(route="/", auth_level=func.AuthLevel.ANONYMOUS)
 def root(req: func.HttpRequest) -> func.HttpResponse:
-    """Root endpoint"""
+    """Root endpoint with API information"""
+    logging.info("Root endpoint called")
+    
     return func.HttpResponse(
         json.dumps({
-            "message": "Agro Auto-Resolve API",
-            "version": "1.0.0",
+            "name": "Agro Auto-Resolve API",
+            "version": "2.0.0",
+            "description": "Auto-Resolve Service Desk Agrícola with Multi-Agent System",
             "endpoints": {
                 "health": "/api/health",
                 "tickets": "/api/tickets",
                 "chat": "/api/chat",
+                "acs_chat_webhook": "/api/acs/chat/webhook",
+                "acs_sms_webhook": "/api/acs/sms/webhook",
                 "agents": "/api/agents",
-                "search": "/api/search"
+                "agent_metrics": "/api/agents/metrics",
+                "runbooks": "/api/agents/runbooks"
             }
         }),
-        mimetype="application/json",
-        status_code=200
+        status_code=200,
+        mimetype="application/json"
     )
