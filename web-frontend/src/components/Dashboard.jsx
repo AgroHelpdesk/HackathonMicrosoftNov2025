@@ -59,7 +59,12 @@ export default function Dashboard() {
       <Grid container spacing={{ xs: 2, sm: 3 }}>
         {/* Multi-Channel Statistics */}
         <Grid item xs={12}>
-          <Card sx={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' }}>
+          <Card sx={{
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                 📡 Multi-Channel Overview
@@ -96,7 +101,12 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12} lg={7}>
-          <Card sx={{ background: 'linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%)' }}>
+          <Card sx={{
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                 <Typography variant="h5" sx={{ fontWeight: 700, flex: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
@@ -150,7 +160,13 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12} lg={5}>
-          <Card sx={{ background: 'linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%)', height: 'fit-content' }}>
+          <Card sx={{
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            height: 'fit-content'
+          }}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 ℹ️ Details

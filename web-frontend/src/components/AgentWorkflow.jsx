@@ -22,7 +22,8 @@ import {
   Stack,
   Divider,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Button
 } from '@mui/material'
 import {
   CloudUpload,
@@ -34,10 +35,14 @@ import {
   Visibility,
   Timer,
   CheckCircleOutline,
-  HourglassEmpty
+  HourglassEmpty,
+  PlayArrow,
+  RestartAlt
 } from '@mui/icons-material'
+import { motion, AnimatePresence } from 'framer-motion'
+import { api } from '../services/api'
 
-const AGENT_STEPS = [
+const AGENT_DEFINITIONS = [
   {
     id: 'field-sense',
     name: 'FieldSense',
@@ -45,7 +50,6 @@ const AGENT_STEPS = [
     description: 'Identifies the client\'s intention',
     icon: CloudUpload,
     paletteKey: 'fieldSense',
-    status: 'completed',
     duration: 2.5
   },
   {
@@ -55,7 +59,6 @@ const AGENT_STEPS = [
     description: 'Collects additional information',
     icon: Info,
     paletteKey: 'harvestAI',
-    status: 'completed',
     duration: 3.8
   },
   {
@@ -65,7 +68,6 @@ const AGENT_STEPS = [
     description: 'Analyzes agricultural data and knowledge',
     icon: Psychology,
     paletteKey: 'agroIntel',
-    status: 'in-progress',
     duration: 0
   },
   {
@@ -75,7 +77,6 @@ const AGENT_STEPS = [
     description: 'Executes runbooks and makes decisions',
     icon: Assignment,
     paletteKey: 'decision',
-    status: 'pending',
     duration: 0
   },
   {
@@ -85,7 +86,6 @@ const AGENT_STEPS = [
     description: 'Explains decisions and next steps',
     icon: Lightbulb,
     paletteKey: 'alert',
-    status: 'pending',
     duration: 0
   }
 ]
@@ -99,45 +99,65 @@ const WORKFLOW_ACTIVITY = [
 ]
 
 const WORKFLOW_SUMMARY = [
-{ label: 'Current call', value: 'T-001 · Soybean pest' },
-{ label: 'Total time', value: '7.8 seconds' },
-{ label: 'Model confidence', value: '92% · High' }
+  { label: 'Current call', value: 'T-001 · Soybean pest' },
+  { label: 'Total time', value: '7.8 seconds' },
+  { label: 'Model confidence', value: '92% · High' }
 ]
 
 export default function AgentWorkflow() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const [workflowState, setWorkflowState] = useState(null)
   const [animatingAgent, setAnimatingAgent] = useState(null)
 
-  const agentsWithTheme = useMemo(
-    () =>
-      AGENT_STEPS.map(agent => ({
-        ...agent,
-        color: theme.palette.agents?.[agent.paletteKey] || agent.color || theme.palette.secondary.main
-      })),
-    [theme]
-  )
-
-  const activeStepIndex = useMemo(() => {
-    const inProgress = agentsWithTheme.findIndex(agent => agent.status === 'in-progress')
-    if (inProgress >= 0) return inProgress
-    const pending = agentsWithTheme.findIndex(agent => agent.status === 'pending')
-    const fallback = pending >= 0 ? pending : agentsWithTheme.length - 1
-    return Math.max(0, fallback)
-  }, [agentsWithTheme])
-
+  // Poll for workflow state
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAnimatingAgent(prev => {
-        const interactiveAgents = AGENT_STEPS.filter(agent => agent.status !== 'pending').map(agent => agent.id)
-        const currentIndex = interactiveAgents.indexOf(prev)
-        const nextIndex = (currentIndex + 1) % interactiveAgents.length
-        return interactiveAgents[nextIndex]
-      })
-    }, 2200)
+    const fetchState = async () => {
+      try {
+        const state = await api.getWorkflowState('T-001')
+        setWorkflowState(state)
 
+        // Determine animating agent
+        const current = state.agents.find(a => a.status === 'in-progress')
+        setAnimatingAgent(current ? current.id : null)
+      } catch (error) {
+        console.error("Error fetching workflow state:", error)
+      }
+    }
+
+    fetchState()
+    const interval = setInterval(fetchState, 1000)
     return () => clearInterval(interval)
   }, [])
+
+  const handleAdvance = async () => {
+    await api.advanceWorkflow('T-001')
+  }
+
+  const handleReset = async () => {
+    await api.resetWorkflow('T-001')
+  }
+
+  const agentsWithStatus = useMemo(() => {
+    if (!workflowState) return AGENT_DEFINITIONS.map(a => ({ ...a, status: 'pending' }))
+
+    return AGENT_DEFINITIONS.map(def => {
+      const stateAgent = workflowState.agents.find(a => a.id === def.id)
+      return {
+        ...def,
+        status: stateAgent ? stateAgent.status : 'pending',
+        color: theme.palette.agents?.[def.paletteKey] || theme.palette.secondary.main
+      }
+    })
+  }, [workflowState, theme])
+
+  const activeStepIndex = useMemo(() => {
+    const inProgress = agentsWithStatus.findIndex(agent => agent.status === 'in-progress')
+    if (inProgress >= 0) return inProgress
+    const pending = agentsWithStatus.findIndex(agent => agent.status === 'pending')
+    const fallback = pending >= 0 ? pending : agentsWithStatus.length
+    return Math.max(0, fallback)
+  }, [agentsWithStatus])
 
   const statusStyles = {
     completed: {
@@ -165,13 +185,23 @@ export default function AgentWorkflow() {
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
-      <Box sx={{ mb: { xs: 3, md: 4 } }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Real-Time Agent Workflow
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Granular control of autonomous agents acting on ticket T-001
-        </Typography>
+      <Box sx={{ mb: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            Real-Time Agent Workflow
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Granular control of autonomous agents acting on ticket T-001
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+          <Button variant="outlined" startIcon={<RestartAlt />} onClick={handleReset}>
+            Reset
+          </Button>
+          <Button variant="contained" startIcon={<PlayArrow />} onClick={handleAdvance}>
+            Next Step
+          </Button>
+        </Stack>
       </Box>
 
       <Grid container spacing={{ xs: 2, md: 3 }}>
@@ -179,8 +209,9 @@ export default function AgentWorkflow() {
           <Card
             sx={{
               border: `1px solid ${theme.palette.divider}`,
-              background: 'linear-gradient(135deg, rgba(95,167,119,0.08) 0%, rgba(44,95,111,0.06) 100%)',
-              boxShadow: '0 16px 40px rgba(44, 95, 111, 0.08)'
+              background: 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.05)'
             }}
           >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -205,7 +236,7 @@ export default function AgentWorkflow() {
                         py: 1.5,
                         borderRadius: 3,
                         border: `1px solid ${theme.palette.divider}`,
-                        backgroundColor: 'rgba(255,255,255,0.9)'
+                        backgroundColor: 'rgba(255,255,255,0.5)'
                       }}
                     >
                       <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -226,30 +257,37 @@ export default function AgentWorkflow() {
                   orientation={isMobile ? 'vertical' : 'horizontal'}
                   sx={{
                     p: { xs: 1, sm: 2 },
-                    backgroundColor: 'rgba(255,255,255,0.6)',
+                    backgroundColor: 'rgba(255,255,255,0.4)',
                     borderRadius: 3,
                     border: `1px dashed ${theme.palette.divider}`
                   }}
                 >
-                  {agentsWithTheme.map(agent => {
+                  {agentsWithStatus.map(agent => {
                     const StepIcon = agent.icon
                     const currentStatus = statusStyles[agent.status]
                     return (
                       <Step key={agent.id} completed={agent.status === 'completed'}>
                         <StepLabel
                           icon={
-                            <Avatar
-                              sx={{
-                                width: { xs: 44, md: 52 },
-                                height: { xs: 44, md: 52 },
-                                bgcolor: agent.color,
-                                color: '#fff',
-                                boxShadow: animatingAgent === agent.id ? '0 0 0 8px rgba(95,167,119,0.15)' : 'none',
-                                transition: 'all 0.3s ease'
+                            <motion.div
+                              animate={{
+                                scale: animatingAgent === agent.id ? [1, 1.1, 1] : 1,
+                                boxShadow: animatingAgent === agent.id ? `0 0 0 8px ${agent.color}30` : 'none'
                               }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                              <StepIcon />
-                            </Avatar>
+                              <Avatar
+                                sx={{
+                                  width: { xs: 44, md: 52 },
+                                  height: { xs: 44, md: 52 },
+                                  bgcolor: agent.color,
+                                  color: '#fff',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              >
+                                <StepIcon />
+                              </Avatar>
+                            </motion.div>
                           }
                           sx={{
                             '& .MuiStepLabel-label': {
@@ -288,65 +326,78 @@ export default function AgentWorkflow() {
             Detailed agent status
           </Typography>
           <Grid container spacing={2}>
-            {agentsWithTheme.map(agent => {
-              const StatusIcon = statusStyles[agent.status].icon
-              return (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={agent.id}>
-                  <Paper
-                    sx={{
-                      p: 2,
-                      height: '100%',
-                      border: `1px solid ${theme.palette.divider}`,
-                      background: 'linear-gradient(135deg, #fff 0%, #f8fbf9 100%)',
-                      transition: 'all 200ms ease',
-                      transform: animatingAgent === agent.id ? 'translateY(-3px)' : 'translateY(0)',
-                      boxShadow: animatingAgent === agent.id ? theme.shadows[6] : theme.shadows[1]
-                    }}
-                  >
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Avatar sx={{ bgcolor: agent.color, width: 48, height: 48 }}>
-                        <agent.icon />
-                      </Avatar>
-                      <Box flex={1}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {agent.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {agent.role}
-                        </Typography>
-                      </Box>
-                      <StatusIcon sx={{ color: statusStyles[agent.status].chipColor }} />
-                    </Stack>
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                      {agent.description}
-                    </Typography>
-
-                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 2 }}>
-                      <Timer sx={{ fontSize: '1rem', color: agent.color }} />
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        {agent.duration > 0 ? `${agent.duration.toFixed(1)}s` : agent.status === 'in-progress' ? 'In progress...' : 'Waiting in queue'}
-                      </Typography>
-                    </Stack>
-
-                    {agent.status === 'in-progress' && (
-                      <LinearProgress
+            <AnimatePresence>
+              {agentsWithStatus.map(agent => {
+                const StatusIcon = statusStyles[agent.status].icon
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={agent.id}>
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Paper
                         sx={{
-                          mt: 2,
-                          height: 6,
-                          borderRadius: 999,
-                          backgroundColor: `${agent.color}30`,
-                          '& .MuiLinearProgress-bar': {
-                            borderRadius: 999,
-                            backgroundColor: agent.color
-                          }
+                          p: 2,
+                          height: '100%',
+                          border: `1px solid ${theme.palette.divider}`,
+                          background: animatingAgent === agent.id
+                            ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,250,245,0.9) 100%)'
+                            : 'rgba(255,255,255,0.6)',
+                          backdropFilter: 'blur(10px)',
+                          transition: 'all 200ms ease',
+                          transform: animatingAgent === agent.id ? 'translateY(-3px)' : 'translateY(0)',
+                          boxShadow: animatingAgent === agent.id ? theme.shadows[6] : theme.shadows[1]
                         }}
-                      />
-                    )}
-                  </Paper>
-                </Grid>
-              )
-            })}
+                      >
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Avatar sx={{ bgcolor: agent.color, width: 48, height: 48 }}>
+                            <agent.icon />
+                          </Avatar>
+                          <Box flex={1}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              {agent.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {agent.role}
+                            </Typography>
+                          </Box>
+                          <StatusIcon sx={{ color: statusStyles[agent.status].chipColor }} />
+                        </Stack>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                          {agent.description}
+                        </Typography>
+
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 2 }}>
+                          <Timer sx={{ fontSize: '1rem', color: agent.color }} />
+                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                            {agent.duration > 0 ? `${agent.duration.toFixed(1)}s` : agent.status === 'in-progress' ? 'Processing...' : 'Waiting'}
+                          </Typography>
+                        </Stack>
+
+                        {agent.status === 'in-progress' && (
+                          <LinearProgress
+                            sx={{
+                              mt: 2,
+                              height: 6,
+                              borderRadius: 999,
+                              backgroundColor: `${agent.color}30`,
+                              '& .MuiLinearProgress-bar': {
+                                borderRadius: 999,
+                                backgroundColor: agent.color
+                              }
+                            }}
+                          />
+                        )}
+                      </Paper>
+                    </motion.div>
+                  </Grid>
+                )
+              })}
+            </AnimatePresence>
           </Grid>
         </Grid>
 
@@ -354,10 +405,10 @@ export default function AgentWorkflow() {
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
             Real-time activity history
           </Typography>
-          <TableContainer component={Paper} sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+          <TableContainer component={Paper} sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}`, background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)' }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#F1F4F8' }}>
+                <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
                   <TableCell>Time</TableCell>
                   <TableCell>Agent</TableCell>
                   <TableCell>Executed action</TableCell>
@@ -369,7 +420,7 @@ export default function AgentWorkflow() {
                 {WORKFLOW_ACTIVITY.map(row => {
                   const AgentIcon = row.icon
                   return (
-                    <TableRow key={`${row.timestamp}-${row.agent}`} sx={{ '&:hover': { backgroundColor: '#F8FBF9' } }}>
+                    <TableRow key={`${row.timestamp}-${row.agent}`} sx={{ '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' } }}>
                       <TableCell>
                         <Chip label={row.timestamp} size="small" sx={{ fontWeight: 600 }} />
                       </TableCell>
@@ -407,7 +458,7 @@ export default function AgentWorkflow() {
         </Grid>
 
         <Grid item xs={12}>
-          <Card sx={{ border: `1px solid ${theme.palette.divider}`, backgroundColor: '#F8FBF9' }}>
+          <Card sx={{ border: `1px solid ${theme.palette.divider}`, backgroundColor: 'rgba(248, 251, 249, 0.8)', backdropFilter: 'blur(10px)' }}>
             <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
                 <Box>
