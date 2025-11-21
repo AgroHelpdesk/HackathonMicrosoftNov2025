@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "projectName": {
+            "value": "agroautoresolve"
+        },
+        "environment": {
+            "value": "prod"
+        },
+        "location": {
+            "value": "brazilsouth"
+        },
+        "functionAppSku": {
+            "value": "P1v2"
+        },
+        "searchServiceSku": {
+            "value": "standard"
+        },
+        "corsAllowedOrigins": {
+            "value": [
+                "https://your-production-domain.com"
+            ]
+        },
+        "azureOpenAiDeploymentName": {
+            "value": "gpt-4"
+        }
+    }
+}

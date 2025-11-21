@@ -25,6 +25,8 @@ This is a modern React frontend (Vite + Material-UI) with mock data for the chal
 * **RB-02**: Open urgent work order (Critical).
 * **RB-03**: Inventory check (Safe).
 * **RB-04**: Pre-fill ART report (Critical).
+* **RB-05**: Check licences, deadlines, and compliance with environmental permit conditions (Safe).
+
 
 ## 📊 Mock Metrics
 

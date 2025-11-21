@@ -1,0 +1,199 @@
+name: Infrastructure CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/bicep/**'
+      - '.github/workflows/infrastructure-ci-cd.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/bicep/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  AZURE_RESOURCE_GROUP: rg-agroautoresolve-dev
+  AZURE_LOCATION: brazilsouth
+
+jobs:
+  validate:
+    name: Validate Bicep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build Bicep
+        run: |
+          az bicep build --file infrastructure/bicep/main.bicep
+          
+      - name: Validate Bicep Template
+        run: |
+          az deployment group validate \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.dev.json
+
+  preview:
+    name: Preview Changes (What-If)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: What-If Analysis
+        id: whatif
+        run: |
+          az deployment group what-if \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.dev.json \
+            --result-format FullResourcePayloads
+
+      - name: Comment PR with What-If
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const output = `#### Bicep What-If Analysis 📋
+            
+            <details><summary>Show What-If Results</summary>
+            
+            \`\`\`
+            ${{ steps.whatif.outputs.stdout }}
+            \`\`\`
+            
+            </details>
+            
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: development
+      url: ${{ steps.deploy.outputs.functionAppUrl }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RESOURCE_GROUP }} \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="agro-deploy-$(date +%Y%m%d-%H%M%S)"
+          
+          az deployment group create \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.dev.json \
+            --name $DEPLOYMENT_NAME
+          
+          # Get outputs
+          FUNCTION_URL=$(az deployment group show \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name $DEPLOYMENT_NAME \
+            --query properties.outputs.functionAppUrl.value -o tsv)
+          
+          echo "functionAppUrl=$FUNCTION_URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "### Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Development" >> $GITHUB_STEP_SUMMARY
+          echo "**Resource Group:** ${{ env.AZURE_RESOURCE_GROUP }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Function App URL:** ${{ steps.deploy.outputs.functionAppUrl }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.environment == 'prod'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.functionAppUrl }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name rg-agroautoresolve-prod \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          DEPLOYMENT_NAME="agro-deploy-prod-$(date +%Y%m%d-%H%M%S)"
+          
+          az deployment group create \
+            --resource-group rg-agroautoresolve-prod \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.prod.json \
+            --name $DEPLOYMENT_NAME
+          
+          # Get outputs
+          FUNCTION_URL=$(az deployment group show \
+            --resource-group rg-agroautoresolve-prod \
+            --name $DEPLOYMENT_NAME \
+            --query properties.outputs.functionAppUrl.value -o tsv)
+          
+          echo "functionAppUrl=$FUNCTION_URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "### Production Deployment Successful! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**Resource Group:** rg-agroautoresolve-prod" >> $GITHUB_STEP_SUMMARY
+          echo "**Function App URL:** ${{ steps.deploy.outputs.functionAppUrl }}" >> $GITHUB_STEP_SUMMARY
