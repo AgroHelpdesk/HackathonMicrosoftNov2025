@@ -6,7 +6,7 @@ import time
 from .base_agent import BaseAgent, AgentResponse
 
 
-class RunbookMaster Agent(BaseAgent):
+class RunbookMasterAgent(BaseAgent):
     """
     Agente de decisão e seleção de runbooks.
     

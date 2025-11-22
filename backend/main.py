@@ -6,8 +6,12 @@ import datetime
 from sqlalchemy.orm import Session
 from database import get_db, Ticket, Agent, Runbook, Metric, Plot, Message
 from agents.orchestrator import AgentOrchestrator
+from routers import functions_emulation
 
 app = FastAPI(title="Agro Auto-Resolve API")
+
+# Include Emulation Router
+app.include_router(functions_emulation.router)
 
 # CORS Configuration
 origins = [
@@ -47,7 +51,7 @@ class TicketResponse(BaseModel):
     messages: List[Dict[str, Any]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Endpoints ---
 

@@ -30,5 +30,26 @@ export const api = {
             body: JSON.stringify({ message, ticketId }),
         });
         return response.json();
+    },
+    // Emulated Azure Functions
+    sendACSChatMessage: async (threadId, message) => {
+        const response = await fetch(`${API_URL}/acs/chat/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ thread_id: threadId, message }),
+        });
+        return response.json();
+    },
+    triggerACSWebhook: async (eventType, data) => {
+        const response = await fetch(`${API_URL}/acs/chat/webhook`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ eventType, data }),
+        });
+        return response.json();
     }
 };
