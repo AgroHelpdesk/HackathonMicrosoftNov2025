@@ -24,10 +24,16 @@ class LocalRAG:
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         
-        # Initialize Embeddings (using nomic-embed-text which is good for RAG)
-        self.embeddings = OllamaEmbeddings(
-            model="nomic-embed-text",
-        )
+        # Initialize Embeddings
+        try:
+            self.embeddings = OllamaEmbeddings(
+                model="nomic-embed-text",
+            )
+            # Test embeddings to ensure model exists
+            self.embeddings.embed_query("test")
+        except Exception as e:
+            print(f"Warning: Ollama model 'nomic-embed-text' not found or error: {e}. Using MockEmbeddings.")
+            self.embeddings = MockEmbeddings()
         
         # Initialize Vector Store
         self.vector_store = Chroma(
@@ -35,6 +41,14 @@ class LocalRAG:
             embedding_function=self.embeddings,
             persist_directory=persist_directory,
         )
+
+class MockEmbeddings:
+    """Mock embeddings for when Ollama is not available."""
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return [[0.0] * 768 for _ in texts]
+        
+    def embed_query(self, text: str) -> List[float]:
+        return [0.0] * 768
         
     def add_documents(self, documents: List[Dict[str, Any]]):
         """

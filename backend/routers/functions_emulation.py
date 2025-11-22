@@ -23,7 +23,13 @@ async def acs_chat_webhook(request: Request, background_tasks: BackgroundTasks):
     logger.info("ACS Chat webhook triggered (Emulated)")
     
     try:
-        event_data = await request.json()
+        try:
+            event_data = await request.json()
+        except Exception:
+            # Handle empty body or invalid JSON
+            logger.warning("Received invalid JSON in webhook")
+            return {"status": "ignored", "reason": "Invalid JSON"}
+            
         event_type = event_data.get("eventType")
         
         logger.info(f"Received ACS event: {event_type}")
@@ -47,7 +53,11 @@ async def send_chat_message(request: Request):
     logger.info("Send chat message endpoint called (Emulated)")
     
     try:
-        req_body = await request.json()
+        try:
+            req_body = await request.json()
+        except Exception:
+             raise HTTPException(status_code=400, detail="Invalid JSON body")
+
         thread_id = req_body.get("thread_id")
         message = req_body.get("message")
         
@@ -67,6 +77,63 @@ async def send_chat_message(request: Request):
     except Exception as e:
         logger.error(f"Error sending chat message: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Workflow Emulation ---
+
+# Mock state storage
+workflow_states = {}
+
+@router.get("/api/workflow/{ticket_id}")
+async def get_workflow_state(ticket_id: str):
+    """Get the current state of the agent workflow for a ticket."""
+    if ticket_id not in workflow_states:
+        # Initialize default state
+        workflow_states[ticket_id] = {
+            "agents": [
+                {"id": "field-sense", "status": "pending"},
+                {"id": "farm-ops", "status": "pending"},
+                {"id": "agro-brain", "status": "pending"},
+                {"id": "runbook-master", "status": "pending"},
+                {"id": "explain-it", "status": "pending"}
+            ],
+            "current_step": 0
+        }
+    return workflow_states[ticket_id]
+
+@router.post("/api/workflow/{ticket_id}/advance")
+async def advance_workflow(ticket_id: str):
+    """Advance the workflow to the next step."""
+    state = await get_workflow_state(ticket_id)
+    agents = state["agents"]
+    current_step = state["current_step"]
+    
+    if current_step < len(agents):
+        # Mark current as completed if it was in progress
+        if agents[current_step]["status"] == "in-progress":
+            agents[current_step]["status"] = "completed"
+            state["current_step"] += 1
+            
+        # Start next if available
+        if state["current_step"] < len(agents):
+             agents[state["current_step"]]["status"] = "in-progress"
+             
+    return state
+
+@router.post("/api/workflow/{ticket_id}/reset")
+async def reset_workflow(ticket_id: str):
+    """Reset the workflow state."""
+    workflow_states[ticket_id] = {
+        "agents": [
+            {"id": "field-sense", "status": "pending"},
+            {"id": "farm-ops", "status": "pending"},
+            {"id": "agro-brain", "status": "pending"},
+            {"id": "runbook-master", "status": "pending"},
+            {"id": "explain-it", "status": "pending"}
+        ],
+        "current_step": 0
+    }
+    return workflow_states[ticket_id]
+
 
 async def _process_chat_message(event_data: Dict[str, Any]):
     """Processa mensagem de chat recebida (Logic copied from acs_chat.py)"""

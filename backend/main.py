@@ -10,9 +10,6 @@ from routers import functions_emulation
 
 app = FastAPI(title="Agro Auto-Resolve API")
 
-# Include Emulation Router
-app.include_router(functions_emulation.router)
-
 # CORS Configuration
 origins = [
     "http://localhost:5173",  # Vite default port
@@ -54,6 +51,9 @@ class TicketResponse(BaseModel):
         from_attributes = True
 
 # --- Endpoints ---
+
+# Include Emulation Router
+app.include_router(functions_emulation.router)
 
 @app.get("/")
 def read_root():

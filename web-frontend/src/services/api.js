@@ -51,5 +51,22 @@ export const api = {
             body: JSON.stringify({ eventType, data }),
         });
         return response.json();
+    },
+    // Workflow Emulation
+    getWorkflowState: async (ticketId) => {
+        const response = await fetch(`${API_URL}/workflow/${ticketId}`);
+        return response.json();
+    },
+    advanceWorkflow: async (ticketId) => {
+        const response = await fetch(`${API_URL}/workflow/${ticketId}/advance`, {
+            method: 'POST',
+        });
+        return response.json();
+    },
+    resetWorkflow: async (ticketId) => {
+        const response = await fetch(`${API_URL}/workflow/${ticketId}/reset`, {
+            method: 'POST',
+        });
+        return response.json();
     }
 };
