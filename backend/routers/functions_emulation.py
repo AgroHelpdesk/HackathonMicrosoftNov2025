@@ -135,6 +135,27 @@ async def reset_workflow(ticket_id: str):
     return workflow_states[ticket_id]
 
 
+async def update_workflow_state(ticket_id: str, agent_id: str, status: str, details: Dict[str, Any]):
+    """Update the workflow state for a ticket."""
+    if ticket_id not in workflow_states:
+        await get_workflow_state(ticket_id)
+    
+    state = workflow_states[ticket_id]
+    
+    # Find agent index
+    agent_index = -1
+    for i, agent in enumerate(state["agents"]):
+        if agent["id"] == agent_id:
+            agent_index = i
+            break
+            
+    if agent_index != -1:
+        state["agents"][agent_index]["status"] = status
+        if status == "in-progress":
+            state["current_step"] = agent_index
+        elif status == "completed":
+            state["current_step"] = agent_index + 1
+
 async def _process_chat_message(event_data: Dict[str, Any]):
     """Processa mensagem de chat recebida (Logic copied from acs_chat.py)"""
     try:
@@ -152,6 +173,10 @@ async def _process_chat_message(event_data: Dict[str, Any]):
         
         logger.info(f"Processing message from {sender_id}: {message_body[:50]}...")
         
+        # Define callback for workflow updates
+        async def on_step_change(agent_id, status, details):
+            await update_workflow_state(thread_id, agent_id, status, details)
+
         # Processar através do orquestrador
         result = await orchestrator.process_message(
             message=message_body,
@@ -162,7 +187,8 @@ async def _process_chat_message(event_data: Dict[str, Any]):
                 "message_id": message_id,
                 "channel": "acs_chat",
                 "timestamp": datetime.utcnow().isoformat()
-            }
+            },
+            on_step_change=on_step_change
         )
         
         # Enviar resposta de volta ao chat

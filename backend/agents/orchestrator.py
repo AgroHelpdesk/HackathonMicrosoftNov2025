@@ -41,7 +41,8 @@ class AgentOrchestrator:
         message: str,
         user_id: Optional[str] = None,
         images: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        on_step_change: Optional[callable] = None
     ) -> Dict[str, Any]:
         """
         Processa uma mensagem através do pipeline de agentes.
@@ -51,6 +52,7 @@ class AgentOrchestrator:
             user_id: ID do usuário (opcional)
             images: Lista de URLs de imagens (opcional)
             metadata: Metadados adicionais (opcional)
+            on_step_change: Callback async function(agent_id, status, details)
         
         Returns:
             Dicionário com:
@@ -77,8 +79,10 @@ class AgentOrchestrator:
         
         try:
             # 1. FieldSense - Classificação de intenção
+            if on_step_change: await on_step_change("field-sense", "in-progress", {"action": "Analyzing intent"})
             fieldsense_response = await self.agents["FieldSense"].process(context)
             agent_history.append(fieldsense_response.to_dict())
+            if on_step_change: await on_step_change("field-sense", "completed", {"result": fieldsense_response.data.get("intent")})
             
             if not fieldsense_response.success:
                 return self._create_error_response("FieldSense failed", agent_history)
@@ -90,8 +94,10 @@ class AgentOrchestrator:
             })
             
             # 2. FarmOps - Coleta de informações
+            if on_step_change: await on_step_change("farm-ops", "in-progress", {"action": "Collecting info"})
             farmops_response = await self.agents["FarmOps"].process(context)
             agent_history.append(farmops_response.to_dict())
+            if on_step_change: await on_step_change("farm-ops", "completed", {"result": "Context enriched"})
             
             if not farmops_response.success:
                 return self._create_error_response("FarmOps failed", agent_history)
@@ -113,8 +119,10 @@ class AgentOrchestrator:
             })
             
             # 3. AgroBrain - Base de conhecimento
+            if on_step_change: await on_step_change("agro-brain", "in-progress", {"action": "Querying knowledge base"})
             agrobrain_response = await self.agents["AgroBrain"].process(context)
             agent_history.append(agrobrain_response.to_dict())
+            if on_step_change: await on_step_change("agro-brain", "completed", {"result": "Recommendations generated"})
             
             if not agrobrain_response.success:
                 return self._create_error_response("AgroBrain failed", agent_history)
@@ -126,8 +134,10 @@ class AgentOrchestrator:
             })
             
             # 4. RunbookMaster - Decisão e automação
+            if on_step_change: await on_step_change("runbook-master", "in-progress", {"action": "Evaluating runbooks"})
             runbook_response = await self.agents["RunbookMaster"].process(context)
             agent_history.append(runbook_response.to_dict())
+            if on_step_change: await on_step_change("runbook-master", "completed", {"result": runbook_response.data.get("decision")})
             
             if not runbook_response.success:
                 return self._create_error_response("RunbookMaster failed", agent_history)
@@ -139,8 +149,10 @@ class AgentOrchestrator:
             
             # 5. ExplainIt - Transparência
             context["agent_history"] = agent_history
+            if on_step_change: await on_step_change("explain-it", "in-progress", {"action": "Generating explanation"})
             explainit_response = await self.agents["ExplainIt"].process(context)
             agent_history.append(explainit_response.to_dict())
+            if on_step_change: await on_step_change("explain-it", "completed", {"result": "Response ready"})
             
             if not explainit_response.success:
                 return self._create_error_response("ExplainIt failed", agent_history)
