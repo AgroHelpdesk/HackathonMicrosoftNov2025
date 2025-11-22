@@ -26,10 +26,10 @@ class AgroBrainAgent(BaseAgent):
         
         # Inicializar Local RAG
         try:
-            from ..data_processing.local_rag import LocalRAG
+            from data_processing.local_rag import LocalRAG
             self.rag = LocalRAG()
-        except ImportError:
-            self.logger.warning("LocalRAG dependencies not found.")
+        except ImportError as e:
+            self.logger.warning(f"LocalRAG dependencies not found: {e}")
             self.rag = None
     
     async def process(self, context: Dict[str, Any]) -> AgentResponse:

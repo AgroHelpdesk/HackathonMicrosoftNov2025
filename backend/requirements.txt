@@ -5,6 +5,7 @@ python-dotenv
 langchain
 langchain-community
 langchain-ollama
+langchain-chroma
 chromadb
 pypdf
 sentence-transformers
