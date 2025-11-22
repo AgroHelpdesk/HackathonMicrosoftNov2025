@@ -63,6 +63,17 @@ class BaseAgent(ABC):
             "failed_requests": 0,
             "total_processing_time_ms": 0
         }
+        
+        # Initialize Local LLM (Ollama)
+        try:
+            from langchain_ollama import ChatOllama
+            self.llm = ChatOllama(
+                model="llama3",
+                temperature=0.2,
+            )
+        except ImportError:
+            self.logger.warning("langchain_ollama not installed. LLM features disabled.")
+            self.llm = None
     
     @abstractmethod
     async def process(self, context: Dict[str, Any]) -> AgentResponse:

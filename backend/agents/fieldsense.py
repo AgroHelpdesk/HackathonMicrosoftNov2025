@@ -115,10 +115,57 @@ class FieldSenseAgent(BaseAgent):
     
     def _classify_intent(self, message: str) -> tuple[str, float]:
         """
-        Classifica a intenção da mensagem.
+        Classifica a intenção da mensagem usando LLM.
         
         Returns:
             Tupla (intent, confidence)
+        """
+        if not self.llm:
+            # Fallback para keywords se LLM não estiver disponível
+            return self._classify_intent_keywords(message)
+            
+        try:
+            prompt = f"""
+            Analyze the following agricultural message and classify the intent into one of these categories:
+            - field_diagnosis (pest, disease, crop issues)
+            - equipment_alert (machinery failure, telemetry alerts)
+            - knowledge_query (general questions, how-to, recommendations)
+            - inventory (stock, supplies, buying)
+            - compliance (legal, reports, deadlines)
+            - general (greetings, other)
+
+            Message: "{message}"
+
+            Return ONLY the category name.
+            """
+            
+            response = self.llm.invoke(prompt)
+            intent = response.content.strip().lower()
+            
+            # Validar se a resposta é uma das categorias esperadas
+            valid_intents = [
+                "field_diagnosis", "equipment_alert", "knowledge_query", 
+                "inventory", "compliance", "general"
+            ]
+            
+            if intent not in valid_intents:
+                # Tentar limpar a resposta ou fallback
+                for valid in valid_intents:
+                    if valid in intent:
+                        intent = valid
+                        break
+                else:
+                    intent = "general"
+            
+            return intent, 0.85 # Confiança estimada do LLM
+            
+        except Exception as e:
+            self.logger.error(f"LLM classification failed: {e}")
+            return self._classify_intent_keywords(message)
+
+    def _classify_intent_keywords(self, message: str) -> tuple[str, float]:
+        """
+        Classifica a intenção da mensagem (Fallback baseado em keywords).
         """
         scores = {}
         

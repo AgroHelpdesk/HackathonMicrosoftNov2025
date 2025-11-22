@@ -24,55 +24,17 @@ class AgroBrainAgent(BaseAgent):
             description="Queries agricultural knowledge base and provides expert recommendations"
         )
         
-        # Base de conhecimento mockada (em produção, usar Azure AI Search)
-        self.knowledge_base = {
-            "fungos": {
-                "ferrugem": {
-                    "description": "Doença fúngica comum em cereais",
-                    "symptoms": ["manchas alaranjadas", "pústulas", "folhas secas"],
-                    "treatment": "Aplicar fungicida triazol",
-                    "prevention": "Rotação de culturas, variedades resistentes"
-                },
-                "antracnose": {
-                    "description": "Fungo que ataca folhas e frutos",
-                    "symptoms": ["manchas circulares escuras", "necrose"],
-                    "treatment": "Fungicida cúprico ou sistêmico",
-                    "prevention": "Evitar irrigação por aspersão"
-                }
-            },
-            "pragas": {
-                "lagarta": {
-                    "description": "Inseto desfolhador",
-                    "symptoms": ["folhas comidas", "presença de lagartas"],
-                    "treatment": "Inseticida biológico (Bt) ou químico",
-                    "prevention": "Monitoramento constante, controle biológico"
-                }
-            },
-            "deficiencias": {
-                "nitrogenio": {
-                    "description": "Deficiência de nitrogênio",
-                    "symptoms": ["amarelamento das folhas mais velhas"],
-                    "treatment": "Aplicar fertilizante nitrogenado (ureia, sulfato de amônio)",
-                    "prevention": "Adubação de cobertura adequada"
-                }
-            }
-        }
+        # Inicializar Local RAG
+        try:
+            from ..data_processing.local_rag import LocalRAG
+            self.rag = LocalRAG()
+        except ImportError:
+            self.logger.warning("LocalRAG dependencies not found.")
+            self.rag = None
     
     async def process(self, context: Dict[str, Any]) -> AgentResponse:
         """
         Processa a consulta e busca conhecimento relevante.
-        
-        Args:
-            context: Deve conter:
-                - intent: str - Intenção da consulta
-                - enriched_context: Dict - Contexto enriquecido
-                - query: str - Consulta específica (opcional)
-        
-        Returns:
-            AgentResponse com:
-                - knowledge: Dict - Conhecimento encontrado
-                - recommendations: List[str] - Recomendações
-                - confidence: float - Confiança na resposta
         """
         start_time = time.time()
         self.log_request(context)
@@ -81,29 +43,36 @@ class AgroBrainAgent(BaseAgent):
             intent = context.get("intent", "general")
             enriched_context = context.get("enriched_context", {})
             query = context.get("query", "")
+            message = context.get("message", "")
+            
+            # Usar a mensagem original se query não estiver definida
+            search_query = query if query else message
             
             # Buscar conhecimento relevante
-            knowledge = self._search_knowledge(enriched_context, intent)
+            knowledge_docs = self._search_knowledge(search_query)
             
-            # Gerar recomendações
-            recommendations = self._generate_recommendations(knowledge, enriched_context)
+            # Gerar resposta com LLM
+            response_text = self._generate_response(search_query, knowledge_docs)
+            
+            # Extrair recomendações (se possível estruturar)
+            recommendations = self._extract_recommendations(response_text)
             
             # Calcular confiança
-            confidence = self._calculate_confidence(knowledge)
+            confidence = self._calculate_confidence(knowledge_docs)
             
             response = AgentResponse(
                 agent_name=self.name,
                 success=True,
                 data={
-                    "knowledge": knowledge,
+                    "knowledge": [d.page_content for d in knowledge_docs],
+                    "response_text": response_text,
                     "recommendations": recommendations,
                     "confidence": confidence,
                     "next_agent": "RunbookMaster"
                 },
                 metadata={
                     "intent": intent,
-                    "knowledge_items_found": len(knowledge),
-                    "recommendations_count": len(recommendations)
+                    "knowledge_items_found": len(knowledge_docs)
                 }
             )
             
@@ -122,72 +91,60 @@ class AgroBrainAgent(BaseAgent):
                 error=str(e)
             )
     
-    def _search_knowledge(self, context: Dict[str, Any], intent: str) -> Dict[str, Any]:
+    def _search_knowledge(self, query: str) -> list:
         """
-        Busca conhecimento relevante na base.
-        
-        Em produção, isso usaria Azure AI Search com embeddings.
+        Busca conhecimento relevante na base RAG.
         """
-        knowledge = {}
-        
-        # Buscar por sintomas
-        symptoms = context.get("symptoms", [])
-        for symptom in symptoms:
-            # Buscar em cada categoria
-            for category, items in self.knowledge_base.items():
-                for item_name, item_data in items.items():
-                    if any(s in symptom for s in item_data.get("symptoms", [])):
-                        if category not in knowledge:
-                            knowledge[category] = []
-                        knowledge[category].append({
-                            "name": item_name,
-                            **item_data
-                        })
-        
-        # Se não encontrou por sintomas, buscar por cultura
-        if not knowledge and "culture" in context:
-            # Retornar conhecimento geral para a cultura
-            knowledge["general"] = [{
-                "name": "Informações Gerais",
-                "description": f"Informações sobre cultivo de {context['culture']}",
-                "recommendations": [
-                    "Monitorar regularmente a lavoura",
-                    "Manter registros de aplicações",
-                    "Seguir calendário de adubação"
-                ]
-            }]
-        
-        return knowledge
+        if not self.rag:
+            return []
+            
+        try:
+            return self.rag.query(query, n_results=3)
+        except Exception as e:
+            self.logger.error(f"RAG search failed: {e}")
+            return []
     
-    def _generate_recommendations(self, knowledge: Dict[str, Any], context: Dict[str, Any]) -> list:
-        """Gera recomendações baseadas no conhecimento encontrado"""
+    def _generate_response(self, query: str, docs: list) -> str:
+        """Gera resposta usando LLM e contexto recuperado"""
+        if not self.llm:
+            return "Desculpe, não consigo gerar uma resposta no momento."
+            
+        context_text = "\n\n".join([d.page_content for d in docs])
+        
+        prompt = f"""
+        You are an expert agricultural assistant named AgroBrain.
+        Use the following context to answer the user's question.
+        If the answer is not in the context, say you don't know but offer general advice based on your training.
+        
+        Context:
+        {context_text}
+        
+        User Question: {query}
+        
+        Answer (in Portuguese):
+        """
+        
+        try:
+            response = self.llm.invoke(prompt)
+            return response.content
+        except Exception as e:
+            self.logger.error(f"LLM generation failed: {e}")
+            return "Ocorreu um erro ao gerar a resposta."
+
+    def _extract_recommendations(self, text: str) -> list:
+        """Tenta extrair recomendações do texto gerado"""
+        # Implementação simplificada
         recommendations = []
-        
-        # Extrair recomendações do conhecimento
-        for category, items in knowledge.items():
-            for item in items:
-                if "treatment" in item:
-                    recommendations.append(f"Tratamento: {item['treatment']}")
-                if "prevention" in item:
-                    recommendations.append(f"Prevenção: {item['prevention']}")
-                if "recommendations" in item:
-                    recommendations.extend(item["recommendations"])
-        
-        # Adicionar recomendações gerais
-        if not recommendations:
-            recommendations.append("Consultar agrônomo para diagnóstico preciso")
-            recommendations.append("Coletar amostras para análise laboratorial")
-        
-        return recommendations[:5]  # Limitar a 5 recomendações
+        lines = text.split('\n')
+        for line in lines:
+            if line.strip().startswith('-') or line.strip().startswith('*') or line.strip()[0:1].isdigit():
+                recommendations.append(line.strip())
+        return recommendations[:5]
     
-    def _calculate_confidence(self, knowledge: Dict[str, Any]) -> float:
+    def _calculate_confidence(self, docs: list) -> float:
         """Calcula confiança na resposta baseado no conhecimento encontrado"""
-        if not knowledge:
+        if not docs:
             return 0.3
         
-        total_items = sum(len(items) for items in knowledge.values())
-        
-        # Mais itens = maior confiança, até um máximo de 0.95
-        confidence = min(0.5 + (total_items * 0.15), 0.95)
-        
-        return round(confidence, 2)
+        # Assumindo que se encontrou docs, a confiança é maior
+        return min(0.5 + (len(docs) * 0.15), 0.95)

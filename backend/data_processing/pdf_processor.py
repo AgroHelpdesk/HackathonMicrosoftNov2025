@@ -4,7 +4,7 @@ PDF Processor - Extrai texto de arquivos PDF do dataset
 import os
 from pathlib import Path
 from typing import List, Dict, Any
-import PyPDF2
+import pypdf
 
 
 class PDFProcessor:
@@ -34,7 +34,7 @@ class PDFProcessor:
         """
         try:
             with open(pdf_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
                 text = ""
                 
                 for page_num in range(len(pdf_reader.pages)):
