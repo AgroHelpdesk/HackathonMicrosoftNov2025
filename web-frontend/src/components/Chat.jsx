@@ -1,56 +1,86 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  Box, Paper, Typography, TextField, Button, List, ListItem, ListItemText, Avatar, Divider
+  Box, Paper, Typography, TextField, Button, List, ListItem, Avatar,
+  CircularProgress, Alert, Chip
 } from '@mui/material'
 import { Send } from '@mui/icons-material'
-import { colors, spacing, borderRadius, shadows, gradients, typography, components } from '../theme/designSystem'
-
-const mockConversations = {
-  'T-001': [
-    { sender: 'user', text: 'I found some caterpillars in plot 22. Can you see what it is?', ts: '2025-11-14T08:00:00' },
-    { sender: 'agent', text: 'Sure, can you send me a photo?', ts: '2025-11-14T08:01:00' },
-    { sender: 'user', text: '[Photo sent]', ts: '2025-11-14T08:02:00' },
-    { sender: 'agent', text: 'I analyzed the photo and identified Helicoverpa armigera caterpillar. Since your crop is at V5 stage and the weather allows inspection, I recommend monitoring 3 more points in the plot. Here is the automatic report with current risk and suggested locations to check. I also notified agronomist Maria, who will review the case.', ts: '2025-11-14T08:05:00' }
-  ],
-  'T-002': [
-    { sender: 'user', text: 'My harvester is vibrating strongly in plot 12.', ts: '2025-11-14T06:00:00' },
-    { sender: 'agent', text: 'Understood. I will check your machine now.', ts: '2025-11-14T06:01:00' },
-    { sender: 'agent', text: 'Carlos, I checked the telemetry of CH670-02 and confirmed vibration above the limit. This may indicate wear or something stuck in the rotor. For safety, stop the machine now. I activated mechanic João Lima, who has already received your location and failure data. I will notify when he is on the way.', ts: '2025-11-14T06:05:00' }
-  ]
-}
+import { colors, spacing, borderRadius, shadows, gradients, typography } from '../theme/designSystem'
+import { apiClient } from '../services/apiClient'
 
 export default function Chat({ ticketId: propTicketId, compact = false }) {
   const { ticketId: paramTicketId } = useParams()
   const ticketId = propTicketId || paramTicketId
-  const [messages, setMessages] = useState(mockConversations[ticketId] || [])
+  const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const handleSend = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { sender: 'user', text: newMessage, ts: new Date().toISOString() }])
+  const handleSend = async () => {
+    if (newMessage.trim() && !loading) {
+      const userMessage = newMessage.trim()
       setNewMessage('')
-      // Mock agent response
-      setTimeout(() => {
+      setError(null)
+
+      // Add user message immediately
+      const userMsg = {
+        sender: 'user',
+        text: userMessage,
+        ts: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, userMsg])
+
+      // Call backend API
+      setLoading(true)
+      try {
+        const response = await apiClient.sendMessage(userMessage, null, ticketId)
+        const formatted = apiClient.formatAgentResponse(response)
+
+        // Add agent response
+        const agentMsg = {
+          sender: 'agent',
+          text: formatted.message,
+          ts: new Date().toISOString(),
+          agents: formatted.agents,
+          intent: formatted.intent,
+          sources: formatted.sources,
+          action: formatted.action,
+          riskLevel: formatted.riskLevel
+        }
+        setMessages(prev => [...prev, agentMsg])
+      } catch (err) {
+        console.error('Error sending message:', err)
+        setError(err.message || 'Failed to send message')
+
+        // Add error message
         setMessages(prev => [...prev, {
           sender: 'agent',
-          text: 'Thank you for the information. I am processing with the agents...',
-          ts: new Date().toISOString()
+          text: 'Desculpe, ocorreu um erro. Por favor, tente novamente.',
+          ts: new Date().toISOString(),
+          isError: true
         }])
-      }, 2000)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
   return (
     <Box sx={{ maxWidth: { xs: '100%', md: 900 }, mx: 'auto', px: { xs: spacing[2], sm: spacing[4] } }}>
       <Box sx={{ mb: { xs: spacing[4], sm: spacing[6] } }}>
-        <Typography variant="h4" sx={{ fontWeight: typography.fontWeight.bold, mb: spacing[1], fontSize: { xs: typography.fontSize['2xl'], sm: typography.fontSize['3xl'] }, display: 'flex', alignItems: 'center', gap: spacing[2] }}>
-          💬 Chat Simulation — {ticketId}
+        <Typography variant="h4" sx={{ fontWeight: typography.fontWeight.bold, mb: spacing[1], fontSize: { xs: typography.fontSize['2xl'], sm: typography.fontSize['3xl'] } }}>
+          💬 Chat — {ticketId || 'New'}
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          Conversation with the client and real-time analysis by agents
+          Powered by AI Agents (FieldSense, AgroBrain, RunbookMaster)
         </Typography>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: spacing[3] }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       <Paper sx={{
         height: compact ? 500 : { xs: 350, sm: 450 },
@@ -81,8 +111,7 @@ export default function Chat({ ticketId: propTicketId, compact = false }) {
                   bgcolor: msg.sender === 'agent' ? colors.status.success : colors.status.warning,
                   width: { xs: 28, sm: 32 },
                   height: { xs: 28, sm: 32 },
-                  fontSize: { xs: typography.fontSize.sm, sm: typography.fontSize.base },
-                  flexShrink: 0
+                  fontSize: { xs: typography.fontSize.sm, sm: typography.fontSize.base }
                 }}>
                   {msg.sender === 'agent' ? '🤖' : '👨‍🌾'}
                 </Avatar>
@@ -95,34 +124,46 @@ export default function Chat({ ticketId: propTicketId, compact = false }) {
                   maxWidth: '100%',
                   boxShadow: shadows.sm
                 }}>
-                  <Typography variant="body2" sx={{ fontSize: { xs: typography.fontSize.sm, sm: typography.fontSize.base } }}>{msg.text}</Typography>
-                  <Typography variant="caption" sx={{
-                    display: 'block',
-                    mt: spacing[1],
-                    opacity: 0.7,
-                    fontSize: { xs: typography.fontSize.xs, sm: '0.75rem' }
-                  }}>
+                  <Typography variant="body2">{msg.text}</Typography>
+
+                  {msg.sender === 'agent' && msg.intent && (
+                    <Box sx={{ mt: spacing[2], display: 'flex', gap: spacing[1], flexWrap: 'wrap' }}>
+                      <Chip label={`Intent: ${msg.intent}`} size="small" color="primary" />
+                      {msg.action && <Chip label={msg.action} size="small" color="secondary" />}
+                    </Box>
+                  )}
+
+                  <Typography variant="caption" sx={{ display: 'block', mt: spacing[1], opacity: 0.7 }}>
                     {new Date(msg.ts).toLocaleTimeString()}
                   </Typography>
                 </Paper>
               </Box>
             </ListItem>
           ))}
+
+          {loading && (
+            <ListItem sx={{ justifyContent: 'center', py: spacing[3] }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" sx={{ ml: spacing[2] }}>
+                Processando com os agentes...
+              </Typography>
+            </ListItem>
+          )}
         </List>
       </Paper>
+
       <Box sx={{ display: 'flex', gap: spacing[2], flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Type your message..."
+          placeholder="Digite sua mensagem..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+          onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+          disabled={loading}
           sx={{
             '& .MuiOutlinedInput-root': {
-              borderRadius: borderRadius.base,
-              '&:hover fieldset': { borderColor: colors.primary.light },
-              '&.Mui-focused fieldset': { borderColor: colors.primary.main }
+              borderRadius: borderRadius.base
             }
           }}
         />
@@ -130,20 +171,16 @@ export default function Chat({ ticketId: propTicketId, compact = false }) {
           variant="contained"
           endIcon={<Send />}
           onClick={handleSend}
+          disabled={loading || !newMessage.trim()}
           sx={{
             background: gradients.primary,
             borderRadius: borderRadius.base,
             fontWeight: typography.fontWeight.medium,
             minWidth: { xs: '100%', sm: 'auto' },
-            mt: { xs: spacing[2], sm: 0 },
-            boxShadow: shadows.button,
-            '&:hover': {
-              background: gradients.primary,
-              boxShadow: shadows.md
-            }
+            boxShadow: shadows.button
           }}
         >
-          Send
+          Enviar
         </Button>
       </Box>
     </Box>

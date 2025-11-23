@@ -18,7 +18,7 @@
     - [x] Integrate RAG (AgroBrain)
     - [x] Implement Intent Classification (FieldSense)
     - [x] Implement Decision Logic (RunbookMaster)
-- [ ] Phase 4: Frontend Wiring
-    - [ ] Create API Client Service
-    - [ ] Replace Mock Data with API Calls
+- [x] Phase 4: Frontend Wiring
+    - [x] Create API Client Service
+    - [x] Replace Mock Data with API Calls
     - [ ] Implement Authentication (MSAL)
