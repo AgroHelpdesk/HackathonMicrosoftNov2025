@@ -40,6 +40,34 @@ After deploying the infrastructure, upload the dataset files:
     az storage blob list --account-name stagroautoresolve001 --container-name knowledge-base --output table --auth-mode login
     ```
 
+## Phase 2: Creating Search Index and Indexing Documents
+
+After uploading the dataset to Blob Storage, create the search index and index the documents:
+
+1.  Install Python dependencies (if not already done):
+    ```powershell
+    pip install -r requirements.txt
+    ```
+
+2.  Create the Azure AI Search index:
+    ```powershell
+    python infrastructure/create_search_index.py
+    ```
+
+3.  Index the documents from Blob Storage:
+    ```powershell
+    python infrastructure/index_documents.py
+    ```
+
+4.  Verify the indexed documents:
+    ```powershell
+    # Check index statistics
+    az search index statistics --name agro-knowledge-base --service-name search-agro-autoresolve --resource-group rg-agro-autoresolve-dev
+    
+    # Test a search query
+    az search query --index-name agro-knowledge-base --service-name search-agro-autoresolve --resource-group rg-agro-autoresolve-dev --search-text "pragas" --query-type simple
+    ```
+
 ## Resources Created
 
 *   **Resource Group**: Container for all resources.

@@ -6,6 +6,8 @@
   "cosmosDbDatabaseName": "AgroServiceDesk",
   "openAiServiceName": "oai-agro-autoresolve",
   "aiSearchServiceName": "search-agro-autoresolve",
+  "searchIndexName": "agro-knowledge-base",
+  "documentIntelligenceServiceName": "di-agro-autoresolve",
   "staticWebAppName": "swa-agro-autoresolve",
   "functionAppName": "func-agro-autoresolve",
   "appServicePlanName": "asp-agro-autoresolve",

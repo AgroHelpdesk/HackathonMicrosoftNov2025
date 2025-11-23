@@ -9,10 +9,10 @@
     - [x] Write `deploy_resources.ps1` (Azure CLI commands)
     - [x] Write `configure_settings.json` (Resource names/regions)
     - [x] Verify script logic (Dry run / Review)
-- [ ] Phase 2: Data Ingestion
-    - [ ] Upload Dataset to Blob Storage
-    - [ ] Implement Indexing Pipeline (Document Intelligence + AI Search)
-    - [ ] Verify Search Results
+- [x] Phase 2: Data Ingestion
+    - [x] Upload Dataset to Blob Storage
+    - [x] Implement Indexing Pipeline (Document Intelligence + AI Search)
+    - [x] Verify Search Results
 - [ ] Phase 3: Agent Logic
     - [ ] Implement Chat API
     - [ ] Integrate RAG (AgroBrain)
