@@ -11,8 +11,23 @@ This directory contains scripts to provision the Azure resources required for th
 
 1.  **Azure CLI**: Ensure `az` is installed and logged in (`az login`).
 2.  **PowerShell**: Required to run the deployment script.
-3.  **Python 3.10+**: Required for data upload scripts.
-4.  **Python Packages**: Install dependencies with `pip install -r requirements.txt`
+3.  **Python 3.10+**: Required for data upload and indexing scripts.
+4.  **Python Virtual Environment**: Set up a virtual environment for Python dependencies:
+    ```powershell
+    # Run the setup script (creates .venv and installs dependencies)
+    .\infrastructure\setup_venv.ps1
+    ```
+    Or manually:
+    ```powershell
+    # Create virtual environment
+    python -m venv .venv
+    
+    # Activate it
+    .\.venv\Scripts\Activate.ps1
+    
+    # Install dependencies
+    pip install -r infrastructure\requirements.txt
+    ```
 
 ## Usage
 
@@ -27,13 +42,14 @@ This directory contains scripts to provision the Azure resources required for th
 
 After deploying the infrastructure, upload the dataset files:
 
-1.  Install Python dependencies:
+1.  Activate the virtual environment and install Python dependencies:
     ```powershell
+    .\.venv\Scripts\Activate.ps1
     pip install -r requirements.txt
     ```
 2.  Run the upload script:
     ```powershell
-    python upload_dataset.py
+    .\.venv\Scripts\python.exe .\upload_dataset.ps1
     ```
 3.  Verify the upload:
     ```powershell
@@ -44,19 +60,20 @@ After deploying the infrastructure, upload the dataset files:
 
 After uploading the dataset to Blob Storage, create the search index and index the documents:
 
-1.  Install Python dependencies (if not already done):
+1.  Activate the virtual environment and install Python dependencies (if not already done):
     ```powershell
+    .\.venv\Scripts\Activate.ps1
     pip install -r requirements.txt
     ```
 
 2.  Create the Azure AI Search index:
     ```powershell
-    python infrastructure/create_search_index.py
+    .\.venv\Scripts\python.exe .\infrastructure\create_search_index.py
     ```
 
 3.  Index the documents from Blob Storage:
     ```powershell
-    python infrastructure/index_documents.py
+    .\.venv\Scripts\python.exe .\infrastructure\index_documents.py
     ```
 
 4.  Verify the indexed documents:
