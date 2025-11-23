@@ -64,6 +64,28 @@ az search service create `
     --location $location `
     --sku basic
 
+# 5b. Create Document Intelligence (optional - for PDF processing)
+Write-Host "Creating Document Intelligence Service: $($config.documentIntelligenceServiceName)..."
+az cognitiveservices account create `
+    --name $config.documentIntelligenceServiceName `
+    --resource-group $rgName `
+    --location $location `
+    --kind FormRecognizer `
+    --sku F0 `
+    --yes
+
+# 5c. Deploy GPT-4o model to Azure OpenAI
+Write-Host "Deploying GPT-4o model to Azure OpenAI..."
+az cognitiveservices account deployment create `
+    --name $config.openAiServiceName `
+    --resource-group $rgName `
+    --deployment-name "gpt-4o" `
+    --model-name "gpt-4o" `
+    --model-version "2024-05-13" `
+    --model-format OpenAI `
+    --sku-capacity 10 `
+    --sku-name "Standard"
+
 # 6. Create Function App (Python)
 # Note: Using Consumption Plan (Serverless)
 Write-Host "Creating Function App: $($config.functionAppName)..."

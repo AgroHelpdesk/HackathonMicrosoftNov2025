@@ -13,11 +13,11 @@
     - [x] Upload Dataset to Blob Storage
     - [x] Implement Indexing Pipeline (Document Intelligence + AI Search)
     - [x] Verify Search Results
-- [ ] Phase 3: Agent Logic
-    - [ ] Implement Chat API
-    - [ ] Integrate RAG (AgroBrain)
-    - [ ] Implement Intent Classification (FieldSense)
-    - [ ] Implement Decision Logic (RunbookMaster)
+- [x] Phase 3: Agent Logic
+    - [x] Implement Chat API
+    - [x] Integrate RAG (AgroBrain)
+    - [x] Implement Intent Classification (FieldSense)
+    - [x] Implement Decision Logic (RunbookMaster)
 - [ ] Phase 4: Frontend Wiring
     - [ ] Create API Client Service
     - [ ] Replace Mock Data with API Calls
