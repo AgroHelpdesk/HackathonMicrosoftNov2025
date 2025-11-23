@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
+import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react"
 import {
   Box,
   AppBar,
@@ -10,7 +11,9 @@ import {
   IconButton,
   Avatar,
   useTheme as useMuiTheme,
-  useMediaQuery
+  useMediaQuery,
+  Container,
+  Paper
 } from '@mui/material'
 import { Menu as MenuIcon } from '@mui/icons-material'
 import Dashboard from './components/Dashboard'
@@ -19,12 +22,15 @@ import Metrics from './components/Metrics'
 import MapView from './components/MapView'
 import AgentWorkflow from './components/AgentWorkflow'
 import Sidebar from './components/Sidebar'
+import { SignInButton } from './components/Auth/SignInButton'
+import { SignOutButton } from './components/Auth/SignOutButton'
 import theme from './theme/theme'
 
 function AppShell() {
   const muiTheme = useMuiTheme()
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { accounts } = useMsal()
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -67,11 +73,16 @@ function AppShell() {
                 <Box sx={{ width: 1, height: 32, bgcolor: 'divider', borderRadius: 1 }} />
                 <Box>
                   <Typography variant="caption" sx={{ textTransform: 'uppercase', color: 'text.secondary' }}>
-                    Supervisor
+                    User
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Prelates</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {accounts[0] ? accounts[0].name : 'User'}
+                  </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40, fontWeight: 600 }}>HP</Avatar>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40, fontWeight: 600 }}>
+                  {accounts[0] ? accounts[0].name.charAt(0) : 'U'}
+                </Avatar>
+                <SignOutButton />
               </Box>
             )}
           </Toolbar>
@@ -111,11 +122,41 @@ function AppShell() {
   )
 }
 
+function LoginScreen() {
+  return (
+    <Box sx={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+    }}>
+      <Container maxWidth="sm">
+        <Paper elevation={3} sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+          <Box sx={{ fontSize: '4rem', mb: 2 }}>🌿</Box>
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            AgriFlow AI
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
+            Intelligent Farm Management System
+          </Typography>
+          <SignInButton />
+        </Paper>
+      </Container>
+    </Box>
+  )
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppShell />
+      <AuthenticatedTemplate>
+        <AppShell />
+      </AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <LoginScreen />
+      </UnauthenticatedTemplate>
     </ThemeProvider>
   )
 }

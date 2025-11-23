@@ -21,4 +21,4 @@
 - [x] Phase 4: Frontend Wiring
     - [x] Create API Client Service
     - [x] Replace Mock Data with API Calls
-    - [ ] Implement Authentication (MSAL)
+    - [x] Implement Authentication (MSAL)
