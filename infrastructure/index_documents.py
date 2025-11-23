@@ -171,8 +171,14 @@ def process_csv(blob_client, blob_name: str) -> List[Dict]:
         if not csv_text or len(csv_text) < 10:
             csv_text = blob_data.decode('latin-1', errors='ignore')
         
-        # Parse CSV
-        df = pd.read_csv(io.StringIO(csv_text))
+        # Parse CSV with semicolon delimiter (Brazilian standard)
+        # Use error_bad_lines=False to skip problematic rows
+        df = pd.read_csv(
+            io.StringIO(csv_text),
+            sep=';',
+            on_bad_lines='skip',
+            encoding_errors='ignore'
+        )
         
         print(f"    Rows: {len(df)}, Columns: {len(df.columns)}")
         
