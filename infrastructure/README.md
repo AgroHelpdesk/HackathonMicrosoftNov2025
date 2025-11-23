@@ -10,7 +10,9 @@ This directory contains scripts to provision the Azure resources required for th
 ## Prerequisites
 
 1.  **Azure CLI**: Ensure `az` is installed and logged in (`az login`).
-2.  **PowerShell**: Required to run the script.
+2.  **PowerShell**: Required to run the deployment script.
+3.  **Python 3.10+**: Required for data upload scripts.
+4.  **Python Packages**: Install dependencies with `pip install -r requirements.txt`
 
 ## Usage
 
@@ -19,6 +21,23 @@ This directory contains scripts to provision the Azure resources required for th
 3.  Run the script:
     ```powershell
     ./deploy_resources.ps1
+    ```
+
+## Uploading Dataset to Blob Storage
+
+After deploying the infrastructure, upload the dataset files:
+
+1.  Install Python dependencies:
+    ```powershell
+    pip install -r requirements.txt
+    ```
+2.  Run the upload script:
+    ```powershell
+    python upload_dataset.py
+    ```
+3.  Verify the upload:
+    ```powershell
+    az storage blob list --account-name stagroautoresolve001 --container-name knowledge-base --output table --auth-mode login
     ```
 
 ## Resources Created

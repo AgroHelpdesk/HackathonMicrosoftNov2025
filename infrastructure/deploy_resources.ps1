@@ -14,13 +14,12 @@ $config = Get-Content $configPath | ConvertFrom-Json
 # Variables
 $rgName = $config.resourceGroupName
 $location = $config.location
-$tags = $config.tags | ForEach-Object { "$($_.Name)=$($_.Value)" } | -join " "
 
 Write-Host "Starting deployment for Resource Group: $rgName in $location..." -ForegroundColor Cyan
 
 # 1. Create Resource Group
 Write-Host "Creating Resource Group..."
-az group create --name $rgName --location $location --tags $tags
+az group create --name $rgName --location $location
 
 # 2. Create Storage Account (for Function App and Blob Storage)
 Write-Host "Creating Storage Account: $($config.storageAccountName)..."
