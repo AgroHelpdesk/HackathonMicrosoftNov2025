@@ -45,6 +45,23 @@ export default function Dashboard() {
     setTickets(prev => prev.map(t => t.id === id ? { ...t, status: action } : t))
   }
 
+  function simulateWorkflow(id) {
+    api.startSimulation(id).then(() => {
+      // Start polling for updates
+      const interval = setInterval(() => {
+        api.getTicket(id).then(updatedTicket => {
+           setTickets(prev => prev.map(t => t.id === id ? updatedTicket : t))
+           if (selected && selected.id === id) {
+             setSelected(updatedTicket)
+           }
+        })
+      }, 2000)
+      
+      // Stop polling after some time (e.g. 20 seconds)
+      setTimeout(() => clearInterval(interval), 20000)
+    })
+  }
+
   return (
     <Box>
       <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -233,6 +250,14 @@ export default function Dashboard() {
                     <ChatComponent ticketId={selected.id} compact={true} />
                   </Box>
                   <CardActions sx={{ justifyContent: 'flex-end', pt: 2, px: 0 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => simulateWorkflow(selected.id)}
+                    >
+                      ▶ Simulate Workflow
+                    </Button>
                     <Button
                       size="small"
                       variant="contained"

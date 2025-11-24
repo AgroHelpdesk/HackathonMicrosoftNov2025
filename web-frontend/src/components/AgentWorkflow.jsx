@@ -109,6 +109,7 @@ export default function AgentWorkflow() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [workflowState, setWorkflowState] = useState(null)
   const [animatingAgent, setAnimatingAgent] = useState(null)
+  const [simulating, setSimulating] = useState(false)
 
   // Poll for workflow state
   useEffect(() => {
@@ -136,6 +137,17 @@ export default function AgentWorkflow() {
 
   const handleReset = async () => {
     await api.resetWorkflow('T-001')
+  }
+
+  const handleSimulate = async () => {
+    try {
+      setSimulating(true)
+      await api.startSimulation('T-001')
+    } catch (error) {
+      console.error('Error starting workflow simulation:', error)
+    } finally {
+      setSimulating(false)
+    }
   }
 
   const agentsWithStatus = useMemo(() => {
@@ -198,7 +210,16 @@ export default function AgentWorkflow() {
           <Button variant="outlined" startIcon={<RestartAlt />} onClick={handleReset}>
             Reset
           </Button>
-          <Button variant="contained" startIcon={<PlayArrow />} onClick={handleAdvance}>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<PlayArrow />}
+            onClick={handleSimulate}
+            disabled={simulating}
+          >
+            {simulating ? 'Simulating...' : 'Simulate Workflow'}
+          </Button>
+          <Button variant="contained" startIcon={<HourglassEmpty />} onClick={handleAdvance}>
             Next Step
           </Button>
         </Stack>

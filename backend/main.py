@@ -33,6 +33,24 @@ class ChatRequest(BaseModel):
     message: str
     ticketId: Optional[str] = None
 
+class TicketStepModel(BaseModel):
+    agent: str
+    text: str
+    ts: str
+
+    class Config:
+        from_attributes = True
+
+
+class MessageModel(BaseModel):
+    sender: str
+    text: str
+    ts: str
+
+    class Config:
+        from_attributes = True
+
+
 class TicketResponse(BaseModel):
     id: str
     type: str
@@ -44,8 +62,8 @@ class TicketResponse(BaseModel):
     images: List[str]
     status: str
     decision: Optional[str]
-    steps: List[Dict[str, Any]]
-    messages: List[Dict[str, Any]]
+    steps: List[TicketStepModel]
+    messages: List[MessageModel]
 
     class Config:
         from_attributes = True
@@ -59,15 +77,12 @@ app.include_router(functions_emulation.router)
 def read_root():
     return {"message": "Agro Auto-Resolve API is running"}
 
-@app.get("/api/tickets")
+@app.get("/api/tickets", response_model=List[TicketResponse])
 def get_tickets(db: Session = Depends(get_db)):
     tickets = db.query(Ticket).all()
-    # Manually format to include steps and messages properly if needed, 
-    # or rely on Pydantic ORM mode if relationships are set up correctly.
-    # For simplicity here, we return the objects and let FastAPI/Pydantic handle serialization
     return tickets
 
-@app.get("/api/tickets/{ticket_id}")
+@app.get("/api/tickets/{ticket_id}", response_model=TicketResponse)
 def get_ticket(ticket_id: str, db: Session = Depends(get_db)):
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:

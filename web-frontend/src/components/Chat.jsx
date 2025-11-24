@@ -24,8 +24,18 @@ const mockConversations = {
 export default function Chat({ ticketId: propTicketId, compact = false }) {
   const { ticketId: paramTicketId } = useParams()
   const ticketId = propTicketId || paramTicketId
-  const [messages, setMessages] = useState(mockConversations[ticketId] || [])
+  const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
+
+  useEffect(() => {
+    if (ticketId) {
+      api.getTicket(ticketId).then(ticket => {
+        if (ticket && ticket.messages) {
+          setMessages(ticket.messages)
+        }
+      }).catch(err => console.error("Error fetching chat messages:", err))
+    }
+  }, [ticketId])
 
   const handleSend = async () => {
     if (newMessage.trim()) {

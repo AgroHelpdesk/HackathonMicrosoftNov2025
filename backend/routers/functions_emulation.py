@@ -5,8 +5,10 @@ Emulates the endpoints that would normally be served by Azure Functions.
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from typing import Dict, Any
 import logging
+import asyncio
 from datetime import datetime
 from agents.orchestrator import AgentOrchestrator
+from database import SessionLocal, Ticket, TicketStep
 
 router = APIRouter()
 logger = logging.getLogger("functions_emulation")
@@ -47,31 +49,64 @@ async def acs_chat_webhook(request: Request, background_tasks: BackgroundTasks):
 
 @router.post("/api/acs/chat/send")
 async def send_chat_message(request: Request):
-    """
-    Emulates the endpoint to send messages via ACS Chat.
-    """
+    """Emulates sending a chat message and returns orchestrator response."""
     logger.info("Send chat message endpoint called (Emulated)")
-    
+
     try:
         try:
             req_body = await request.json()
         except Exception:
-             raise HTTPException(status_code=400, detail="Invalid JSON body")
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-        thread_id = req_body.get("thread_id")
+        thread_id = req_body.get("thread_id") or req_body.get("ticket_id")
         message = req_body.get("message")
-        
-        if not thread_id or not message:
-            raise HTTPException(status_code=400, detail="thread_id and message are required")
-        
-        logger.info(f"Would send message to thread {thread_id}: {message[:50]}...")
-        
-        return {
-            "status": "sent",
+        sender_id = req_body.get("sender_id", "acs-web-user")
+        images = req_body.get("images", [])
+        metadata = req_body.get("metadata", {})
+
+        if not message:
+            raise HTTPException(status_code=400, detail="message is required")
+
+        if not thread_id:
+            thread_id = metadata.get("thread_id") or f"thread-{sender_id}"
+
+        logger.info(f"Processing ACS chat message for thread {thread_id}: {message[:80]}")
+
+        async def on_step_change(agent_id, status, details):
+            await update_workflow_state(thread_id, agent_id, status, details)
+
+        result = await orchestrator.process_message(
+            message=message,
+            user_id=sender_id,
+            images=images,
+            metadata={
+                **metadata,
+                "thread_id": thread_id,
+                "channel": metadata.get("channel", "acs_chat_emulated"),
+            },
+            on_step_change=on_step_change
+        )
+
+        response_payload = {
+            "status": "processed" if result.get("success") else "error",
             "thread_id": thread_id,
-            "message_id": "mock_message_id_emulated"
+            "message_id": result.get("timestamp", datetime.utcnow().isoformat()),
+            "agent_history": result.get("agent_history", []),
+            "decision": result.get("decision"),
+            "recommendations": result.get("recommendations", []),
+            "processing_time_ms": result.get("processing_time_ms"),
+            "requires_user_input": result.get("requires_user_input", False),
+            "questions": result.get("questions", []),
+            "missing_fields": result.get("missing_fields", []),
         }
-        
+
+        if result.get("success") and result.get("explanation"):
+            response_payload["response_text"] = result["explanation"]
+        elif not result.get("success"):
+            response_payload["error"] = result.get("error", "Unknown error")
+
+        return response_payload
+
     except HTTPException:
         raise
     except Exception as e:
@@ -230,3 +265,50 @@ async def _send_error_response(thread_id: str, error: str):
     """Envia mensagem de erro para o thread"""
     error_message = f"❌ Desculpe, ocorreu um erro ao processar sua mensagem: {error}"
     logger.info(f"Would send error to thread {thread_id}: {error_message}")
+
+async def _simulate_workflow_progress(ticket_id: str):
+    """
+    Simulates the progression of agents working on a ticket.
+    """
+    steps = [
+        {"agent": "FieldSense", "text": "Analyzing user intent: Field Diagnosis detected."},
+        {"agent": "FarmOps", "text": "Retrieving plot data for location... Soil moisture is low."},
+        {"agent": "AgroBrain", "text": "Querying knowledge base for 'yellow leaves' in corn... Found 3 matches."},
+        {"agent": "RunbookMaster", "text": "Selected 'Irrigation Protocol A'. Safety check passed. Auto-executing."},
+        {"agent": "ExplainIt", "text": "Generated transparency report. Confidence score: 98%."}
+    ]
+
+    db = SessionLocal()
+    try:
+        # Verify ticket exists
+        ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+        if not ticket:
+            logger.warning(f"Simulation failed: Ticket {ticket_id} not found")
+            return
+
+        for step_data in steps:
+            await asyncio.sleep(3) # Simulate processing time
+            
+            new_step = TicketStep(
+                ticket_id=ticket_id,
+                agent=step_data["agent"],
+                text=step_data["text"],
+                ts=datetime.utcnow().isoformat()
+            )
+            db.add(new_step)
+            db.commit()
+            logger.info(f"Added simulation step: {step_data['agent']} for ticket {ticket_id}")
+            
+    except Exception as e:
+        logger.error(f"Error in workflow simulation: {e}")
+    finally:
+        db.close()
+
+@router.post("/api/simulation/workflow/{ticket_id}")
+async def start_workflow_simulation(ticket_id: str, background_tasks: BackgroundTasks):
+    """
+    Starts a simulated workflow for a given ticket.
+    Updates the ticket steps dynamically over time.
+    """
+    background_tasks.add_task(_simulate_workflow_progress, ticket_id)
+    return {"status": "Simulation started", "ticket_id": ticket_id}

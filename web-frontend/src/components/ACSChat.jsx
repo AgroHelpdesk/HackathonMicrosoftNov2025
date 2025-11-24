@@ -15,6 +15,7 @@ import {
     Divider
 } from '@mui/material'
 import { Send, SmartToy, Person, CheckCircle, HourglassEmpty } from '@mui/icons-material'
+import { api } from '../services/api'
 
 /**
  * ACS Chat Component
@@ -66,58 +67,55 @@ export default function ACSChat({ threadId, onClose }) {
         setMessages(prev => [...prev, userMessage])
         setInput('')
         setLoading(true)
+        setAgentProcessing(null)
 
         try {
-            // Call agents API
-            const response = await fetch('/api/agents/process', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: input,
-                    user_id: 'web-user',
-                    metadata: { channel: 'web', thread_id: threadId }
-                })
+            const response = await api.sendACSChatMessage(threadId || 'demo-thread', userMessage.text, {
+                sender_id: 'acs-web-user',
+                metadata: { channel: 'acs_chat', source: 'web' }
             })
 
-            const result = await response.json()
-
-            if (result.success) {
-                // Show agent processing
-                setAgentProcessing(result.agent_history)
-
-                // Add bot response
-                const botMessage = {
-                    id: (Date.now() + 1).toString(),
-                    sender: 'bot',
-                    text: result.explanation,
-                    timestamp: new Date(),
-                    agentInfo: {
-                        agents: result.agent_history.map(h => h.agent_name),
-                        decision: result.decision,
-                        recommendations: result.recommendations,
-                        processingTime: result.processing_time_ms
-                    }
-                }
-
-                setTimeout(() => {
-                    setMessages(prev => [...prev, botMessage])
-                    setAgentProcessing(null)
-                    setLoading(false)
-                }, 1000)
-            } else {
-                throw new Error(result.error || 'Unknown error')
+            if (response.status !== 'processed') {
+                throw new Error(response.error || 'Unable to process message')
             }
+
+            setAgentProcessing(response.agent_history || [])
+
+            const responseText = response.requires_user_input && response.questions?.length
+                ? `I need a bit more info:
+${response.questions.map((q, idx) => `${idx + 1}. ${q}`).join('\n')}`
+                : response.response_text || 'Message processed successfully.'
+
+            const botMessage = {
+                id: (Date.now() + 1).toString(),
+                sender: 'bot',
+                text: responseText,
+                timestamp: new Date(),
+                agentInfo: {
+                    agents: (response.agent_history || []).map(h => h.agent_name),
+                    decision: response.decision,
+                    recommendations: response.recommendations,
+                    processingTime: response.processing_time_ms
+                }
+            }
+
+            setTimeout(() => {
+                setMessages(prev => [...prev, botMessage])
+                setAgentProcessing(null)
+                setLoading(false)
+            }, 800)
         } catch (error) {
             console.error('Error sending message:', error)
             const errorMessage = {
                 id: (Date.now() + 1).toString(),
                 sender: 'bot',
-                text: 'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.',
+                text: 'Sorry, something went wrong while processing your message. Please try again.',
                 timestamp: new Date(),
                 isError: true
             }
             setMessages(prev => [...prev, errorMessage])
             setLoading(false)
+            setAgentProcessing(null)
         }
     }
 

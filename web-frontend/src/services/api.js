@@ -32,13 +32,17 @@ export const api = {
         return response.json();
     },
     // Emulated Azure Functions
-    sendACSChatMessage: async (threadId, message) => {
+    sendACSChatMessage: async (threadId, message, options = {}) => {
         const response = await fetch(`${API_URL}/acs/chat/send`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ thread_id: threadId, message }),
+            body: JSON.stringify({
+                thread_id: threadId,
+                message,
+                ...options,
+            }),
         });
         return response.json();
     },
@@ -52,7 +56,17 @@ export const api = {
         });
         return response.json();
     },
+    getTicket: async (ticketId) => {
+        const response = await fetch(`${API_URL}/tickets/${ticketId}`);
+        return response.json();
+    },
     // Workflow Emulation
+    startSimulation: async (ticketId) => {
+        const response = await fetch(`${API_URL}/simulation/workflow/${ticketId}`, {
+            method: 'POST',
+        });
+        return response.json();
+    },
     getWorkflowState: async (ticketId) => {
         const response = await fetch(`${API_URL}/workflow/${ticketId}`);
         return response.json();
