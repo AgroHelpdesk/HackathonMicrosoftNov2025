@@ -151,13 +151,26 @@ export default function AgentWorkflow() {
   }
 
   const agentsWithStatus = useMemo(() => {
-    if (!workflowState) return AGENT_DEFINITIONS.map(a => ({ ...a, status: 'pending' }))
+    if (!workflowState) return AGENT_DEFINITIONS.map(a => ({ ...a, status: 'pending', durationSeconds: 0 }))
 
     return AGENT_DEFINITIONS.map(def => {
       const stateAgent = workflowState.agents.find(a => a.id === def.id)
+      const now = Date.now()
+      let durationSeconds = 0
+
+      if (stateAgent) {
+        if (stateAgent.status === 'completed' && stateAgent.duration_ms) {
+          durationSeconds = stateAgent.duration_ms / 1000
+        } else if (stateAgent.status === 'in-progress' && stateAgent.started_at) {
+          const started = new Date(stateAgent.started_at).getTime()
+          durationSeconds = Math.max(0, (now - started) / 1000)
+        }
+      }
+
       return {
         ...def,
         status: stateAgent ? stateAgent.status : 'pending',
+        durationSeconds,
         color: theme.palette.agents?.[def.paletteKey] || theme.palette.secondary.main
       }
     })
@@ -210,7 +223,7 @@ export default function AgentWorkflow() {
           <Button variant="outlined" startIcon={<RestartAlt />} onClick={handleReset}>
             Reset
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="success"
             startIcon={<PlayArrow />}
@@ -218,7 +231,7 @@ export default function AgentWorkflow() {
             disabled={simulating}
           >
             {simulating ? 'Simulating...' : 'Simulate Workflow'}
-          </Button>
+          </Button> */}
           <Button variant="contained" startIcon={<HourglassEmpty />} onClick={handleAdvance}>
             Next Step
           </Button>
@@ -395,7 +408,11 @@ export default function AgentWorkflow() {
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 2 }}>
                           <Timer sx={{ fontSize: '1rem', color: agent.color }} />
                           <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                            {agent.duration > 0 ? `${agent.duration.toFixed(1)}s` : agent.status === 'in-progress' ? 'Processing...' : 'Waiting'}
+                            {agent.durationSeconds > 0
+                              ? `${agent.durationSeconds.toFixed(1)}s`
+                              : agent.status === 'in-progress'
+                                ? 'Processing...'
+                                : 'Waiting'}
                           </Typography>
                         </Stack>
 

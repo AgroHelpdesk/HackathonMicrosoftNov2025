@@ -7,6 +7,7 @@ from typing import Dict, Any
 import logging
 import asyncio
 from datetime import datetime
+from copy import deepcopy
 from agents.orchestrator import AgentOrchestrator
 from database import SessionLocal, Ticket, TicketStep
 
@@ -118,78 +119,105 @@ async def send_chat_message(request: Request):
 # Mock state storage
 workflow_states = {}
 
+def _default_agent_states():
+    return [
+        {"id": "field-sense", "status": "pending", "started_at": None, "completed_at": None, "duration_ms": 0},
+        {"id": "farm-ops", "status": "pending", "started_at": None, "completed_at": None, "duration_ms": 0},
+        {"id": "agro-brain", "status": "pending", "started_at": None, "completed_at": None, "duration_ms": 0},
+        {"id": "runbook-master", "status": "pending", "started_at": None, "completed_at": None, "duration_ms": 0},
+        {"id": "explain-it", "status": "pending", "started_at": None, "completed_at": None, "duration_ms": 0}
+    ]
+
+
+def _reset_workflow_state(ticket_id: str):
+    workflow_states[ticket_id] = {
+        "agents": deepcopy(_default_agent_states()),
+        "current_step": 0
+    }
+
+
+def _ensure_workflow_state(ticket_id: str):
+    if ticket_id not in workflow_states:
+        _reset_workflow_state(ticket_id)
+    return workflow_states[ticket_id]
+
 @router.get("/api/workflow/{ticket_id}")
 async def get_workflow_state(ticket_id: str):
     """Get the current state of the agent workflow for a ticket."""
-    if ticket_id not in workflow_states:
-        # Initialize default state
-        workflow_states[ticket_id] = {
-            "agents": [
-                {"id": "field-sense", "status": "pending"},
-                {"id": "farm-ops", "status": "pending"},
-                {"id": "agro-brain", "status": "pending"},
-                {"id": "runbook-master", "status": "pending"},
-                {"id": "explain-it", "status": "pending"}
-            ],
-            "current_step": 0
-        }
-    return workflow_states[ticket_id]
+    return _ensure_workflow_state(ticket_id)
 
 @router.post("/api/workflow/{ticket_id}/advance")
 async def advance_workflow(ticket_id: str):
     """Advance the workflow to the next step."""
-    state = await get_workflow_state(ticket_id)
+    state = _ensure_workflow_state(ticket_id)
     agents = state["agents"]
     current_step = state["current_step"]
-    
-    if current_step < len(agents):
-        # Mark current as completed if it was in progress
-        if agents[current_step]["status"] == "in-progress":
-            agents[current_step]["status"] = "completed"
-            state["current_step"] += 1
-            
-        # Start next if available
+
+    if current_step >= len(agents):
+        return state
+
+    current_agent = agents[current_step]
+
+    if current_agent["status"] == "pending":
+        await update_workflow_state(ticket_id, current_agent["id"], "in-progress", {"action": "manual advance"})
+    elif current_agent["status"] == "in-progress":
+        await update_workflow_state(ticket_id, current_agent["id"], "completed", {"action": "manual advance"})
         if state["current_step"] < len(agents):
-             agents[state["current_step"]]["status"] = "in-progress"
-             
+            next_agent = agents[state["current_step"]]
+            if next_agent["status"] == "pending":
+                await update_workflow_state(ticket_id, next_agent["id"], "in-progress", {"action": "manual advance"})
+    else:
+        if state["current_step"] < len(agents):
+            next_agent = agents[state["current_step"]]
+            if next_agent["status"] == "pending":
+                await update_workflow_state(ticket_id, next_agent["id"], "in-progress", {"action": "manual advance"})
+
     return state
 
 @router.post("/api/workflow/{ticket_id}/reset")
 async def reset_workflow(ticket_id: str):
     """Reset the workflow state."""
-    workflow_states[ticket_id] = {
-        "agents": [
-            {"id": "field-sense", "status": "pending"},
-            {"id": "farm-ops", "status": "pending"},
-            {"id": "agro-brain", "status": "pending"},
-            {"id": "runbook-master", "status": "pending"},
-            {"id": "explain-it", "status": "pending"}
-        ],
-        "current_step": 0
-    }
+    _reset_workflow_state(ticket_id)
     return workflow_states[ticket_id]
 
 
 async def update_workflow_state(ticket_id: str, agent_id: str, status: str, details: Dict[str, Any]):
     """Update the workflow state for a ticket."""
-    if ticket_id not in workflow_states:
-        await get_workflow_state(ticket_id)
-    
-    state = workflow_states[ticket_id]
-    
-    # Find agent index
-    agent_index = -1
-    for i, agent in enumerate(state["agents"]):
+    state = _ensure_workflow_state(ticket_id)
+
+    agent_record = None
+    agent_index = None
+    for idx, agent in enumerate(state["agents"]):
         if agent["id"] == agent_id:
-            agent_index = i
+            agent_record = agent
+            agent_index = idx
             break
-            
-    if agent_index != -1:
-        state["agents"][agent_index]["status"] = status
-        if status == "in-progress":
-            state["current_step"] = agent_index
-        elif status == "completed":
-            state["current_step"] = agent_index + 1
+
+    if not agent_record:
+        return
+
+    now = datetime.utcnow().isoformat()
+    agent_record.setdefault("duration_ms", 0)
+
+    if status == "in-progress":
+        agent_record["status"] = "in-progress"
+        agent_record["started_at"] = agent_record.get("started_at") or now
+        agent_record["completed_at"] = None
+        state["current_step"] = agent_index
+    elif status == "completed":
+        agent_record["status"] = "completed"
+        agent_record["completed_at"] = now
+        start = agent_record.get("started_at")
+        if start:
+            try:
+                start_dt = datetime.fromisoformat(start)
+                end_dt = datetime.fromisoformat(now)
+                agent_record["duration_ms"] = int((end_dt - start_dt).total_seconds() * 1000)
+            except ValueError:
+                logger.warning("Invalid start time format for agent %s", agent_id)
+        state["current_step"] = agent_index + 1
+    else:
+        agent_record["status"] = status
 
 async def _process_chat_message(event_data: Dict[str, Any]):
     """Processa mensagem de chat recebida (Logic copied from acs_chat.py)"""
@@ -271,11 +299,11 @@ async def _simulate_workflow_progress(ticket_id: str):
     Simulates the progression of agents working on a ticket.
     """
     steps = [
-        {"agent": "FieldSense", "text": "Analyzing user intent: Field Diagnosis detected."},
-        {"agent": "FarmOps", "text": "Retrieving plot data for location... Soil moisture is low."},
-        {"agent": "AgroBrain", "text": "Querying knowledge base for 'yellow leaves' in corn... Found 3 matches."},
-        {"agent": "RunbookMaster", "text": "Selected 'Irrigation Protocol A'. Safety check passed. Auto-executing."},
-        {"agent": "ExplainIt", "text": "Generated transparency report. Confidence score: 98%."}
+        {"agent_id": "field-sense", "agent": "FieldSense", "text": "Analyzing user intent: Field Diagnosis detected."},
+        {"agent_id": "farm-ops", "agent": "FarmOps", "text": "Retrieving plot data for location... Soil moisture is low."},
+        {"agent_id": "agro-brain", "agent": "AgroBrain", "text": "Querying knowledge base for 'yellow leaves' in corn... Found 3 matches."},
+        {"agent_id": "runbook-master", "agent": "RunbookMaster", "text": "Selected 'Irrigation Protocol A'. Safety check passed. Auto-executing."},
+        {"agent_id": "explain-it", "agent": "ExplainIt", "text": "Generated transparency report. Confidence score: 98%."}
     ]
 
     db = SessionLocal()
@@ -287,6 +315,7 @@ async def _simulate_workflow_progress(ticket_id: str):
             return
 
         for step_data in steps:
+            await update_workflow_state(ticket_id, step_data["agent_id"], "in-progress", {"action": step_data["text"]})
             await asyncio.sleep(3) # Simulate processing time
             
             new_step = TicketStep(
@@ -298,6 +327,7 @@ async def _simulate_workflow_progress(ticket_id: str):
             db.add(new_step)
             db.commit()
             logger.info(f"Added simulation step: {step_data['agent']} for ticket {ticket_id}")
+            await update_workflow_state(ticket_id, step_data["agent_id"], "completed", {"result": step_data["text"]})
             
     except Exception as e:
         logger.error(f"Error in workflow simulation: {e}")
@@ -310,5 +340,6 @@ async def start_workflow_simulation(ticket_id: str, background_tasks: Background
     Starts a simulated workflow for a given ticket.
     Updates the ticket steps dynamically over time.
     """
+    _reset_workflow_state(ticket_id)
     background_tasks.add_task(_simulate_workflow_progress, ticket_id)
     return {"status": "Simulation started", "ticket_id": ticket_id}
