@@ -97,11 +97,7 @@ jobs:
             az webapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --settings \
-                USE-KEY-VAULT="true" \
-                AZURE-KEY-VAULT-URL="https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/" \
-                ENVIRONMENT="development" \
-                LOG-LEVEL="INFO"
+              --settings USE-KEY-VAULT=true AZURE-KEY-VAULT-URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ ENVIRONMENT=development LOG-LEVEL=INFO
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -144,11 +140,7 @@ jobs:
             az webapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
-              --settings \
-                USE-KEY-VAULT="true" \
-                AZURE-KEY-VAULT-URL="https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/" \
-                ENVIRONMENT="production" \
-                LOG-LEVEL="WARNING"
+              --settings USE-KEY-VAULT=true AZURE-KEY-VAULT-URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ ENVIRONMENT=production LOG-LEVEL=WARNING
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
