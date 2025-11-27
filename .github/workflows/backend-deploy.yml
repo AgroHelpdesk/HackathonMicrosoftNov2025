@@ -111,7 +111,10 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
+            set -e
+            
             # Habilitar System-Assigned Managed Identity no Web App
+            echo "Enabling Managed Identity for Web App..."
             PRINCIPAL_ID=$(az webapp identity assign \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
@@ -119,11 +122,26 @@ jobs:
             
             echo "Managed Identity Principal ID: $PRINCIPAL_ID"
             
-            # Conceder permissões de leitura de secrets no Key Vault
-            az keyvault set-policy \
-              --name ${{ secrets.AZURE_KEYVAULT_NAME }} \
-              --object-id $PRINCIPAL_ID \
-              --secret-permissions get list
+            # Aguardar propagação da identidade (evita race condition)
+            echo "Waiting for identity propagation..."
+            sleep 10
+            
+            # Verificar se Key Vault existe
+            echo "Verifying Key Vault exists..."
+            if az keyvault show --name ${{ secrets.AZURE_KEYVAULT_NAME }} &>/dev/null; then
+              echo "Key Vault found. Granting permissions..."
+              
+              # Conceder permissões de leitura de secrets no Key Vault
+              az keyvault set-policy \
+                --name ${{ secrets.AZURE_KEYVAULT_NAME }} \
+                --object-id $PRINCIPAL_ID \
+                --secret-permissions get list
+              
+              echo "✅ Key Vault permissions granted successfully"
+            else
+              echo "⚠️ Key Vault ${{ secrets.AZURE_KEYVAULT_NAME }} not found. Skipping permissions."
+              echo "Application will use environment variables instead of Key Vault."
+            fi
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -180,7 +198,10 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
+            set -e
+            
             # Habilitar System-Assigned Managed Identity no Web App
+            echo "Enabling Managed Identity for Web App..."
             PRINCIPAL_ID=$(az webapp identity assign \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
@@ -188,11 +209,26 @@ jobs:
             
             echo "Managed Identity Principal ID: $PRINCIPAL_ID"
             
-            # Conceder permissões de leitura de secrets no Key Vault
-            az keyvault set-policy \
-              --name ${{ secrets.AZURE_KEYVAULT_NAME }} \
-              --object-id $PRINCIPAL_ID \
-              --secret-permissions get list
+            # Aguardar propagação da identidade (evita race condition)
+            echo "Waiting for identity propagation..."
+            sleep 10
+            
+            # Verificar se Key Vault existe
+            echo "Verifying Key Vault exists..."
+            if az keyvault show --name ${{ secrets.AZURE_KEYVAULT_NAME }} &>/dev/null; then
+              echo "Key Vault found. Granting permissions..."
+              
+              # Conceder permissões de leitura de secrets no Key Vault
+              az keyvault set-policy \
+                --name ${{ secrets.AZURE_KEYVAULT_NAME }} \
+                --object-id $PRINCIPAL_ID \
+                --secret-permissions get list
+              
+              echo "✅ Key Vault permissions granted successfully"
+            else
+              echo "⚠️ Key Vault ${{ secrets.AZURE_KEYVAULT_NAME }} not found. Skipping permissions."
+              echo "Application will use environment variables instead of Key Vault."
+            fi
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
