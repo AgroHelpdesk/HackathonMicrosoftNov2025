@@ -38,7 +38,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                         </div>
                         <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                         <div className="text-xs opacity-60 mt-2">
-                            {message.timestamp.toLocaleTimeString('pt-BR')}
+                            {message.timestamp.toLocaleTimeString('en-US')}
                         </div>
                     </div>
                 </div>

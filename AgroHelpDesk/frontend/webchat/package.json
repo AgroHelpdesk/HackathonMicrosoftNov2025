@@ -1,7 +1,7 @@
 {
     "name": "agrohelpdesk-frontend",
     "version": "1.0.0",
-    "description": "AgroHelpDesk - Sistema de Atendimento Agrícola Inteligente",
+    "description": "AgroHelpDesk - Intelligent Agricultural Support System",
     "private": true,
     "dependencies": {
         "@tailwindcss/forms": "^0.5.7",

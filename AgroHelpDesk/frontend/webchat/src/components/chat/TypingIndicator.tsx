@@ -9,7 +9,7 @@ interface TypingIndicatorProps {
  * Typing indicator component
  */
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
-    message = 'Atendente está analisando sua solicitação...',
+    message = 'Assistant is analyzing your request...',
 }) => {
     return (
         <div className="flex justify-start">

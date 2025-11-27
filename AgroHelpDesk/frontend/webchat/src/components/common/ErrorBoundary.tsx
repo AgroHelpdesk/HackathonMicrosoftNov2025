@@ -41,9 +41,9 @@ export class ErrorBoundary extends Component<Props, State> {
                             <div className="p-4 bg-red-100 rounded-full">
                                 <AlertCircle className="w-12 h-12 text-red-500" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-800">Algo deu errado</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">Something went wrong</h2>
                             <p className="text-gray-600 text-center">
-                                Desculpe, ocorreu um erro inesperado. Por favor, tente recarregar a página.
+                                Sorry, an unexpected error occurred. Please try reloading the page.
                             </p>
                             {process.env.NODE_ENV === 'development' && this.state.error && (
                                 <div className="w-full p-4 bg-gray-100 rounded-lg">
@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
                                 className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
                             >
                                 <RefreshCw className="w-5 h-5" />
-                                <span className="font-medium">Recarregar Página</span>
+                                <span className="font-medium">Reload Page</span>
                             </button>
                         </div>
                     </div>

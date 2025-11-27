@@ -122,7 +122,7 @@ export const useChat = (): UseChatReturn => {
                 const errorMsg: ChatMessage = {
                     id: `msg-${Date.now()}`,
                     content: errorMessage,
-                    sender: 'Sistema',
+                    sender: 'System',
                     timestamp: new Date(),
                     isBot: true,
                     isError: true,

@@ -10,6 +10,7 @@ export const useAutoScroll = <T extends HTMLElement>(dependency: any[]) => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, dependency);
 
     return scrollRef;
