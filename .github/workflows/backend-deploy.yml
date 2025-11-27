@@ -55,7 +55,18 @@ jobs:
       - name: Check imports and syntax
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          python -c "import app.main; print('✅ Main module loads successfully')"
+          python -m py_compile app/main.py
+          python -m compileall -q app/
+        env:
+          OPENAI_ENDPOINT: "https://dummy.openai.azure.com/"
+          OPENAI_KEY: "dummy-key-for-validation"
+          OPENAI_API_VERSION: "2024-02-15-preview"
+          OPENAI_MODEL_DEPLOYMENT: "gpt-4"
+          ACS_ENDPOINT: "https://dummy.communication.azure.com/"
+          ACS_KEY: "dummy-key-for-validation"
+          AZURE_SEARCH_ENDPOINT: "https://dummy.search.windows.net"
+          AZURE_SEARCH_KEY: "dummy-key-for-validation"
+          AZURE_SEARCH_INDEX_NAME: "dummy-index"
 
   deploy-dev:
     runs-on: ubuntu-latest

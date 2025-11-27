@@ -7,7 +7,7 @@ logger = get_logger("search")
 try:
     from azure.search.documents import SearchClient
     from azure.core.credentials import AzureKeyCredential
-    SEARCH_AVAILABLE = settings.AZURE_SEARCH_ENDPOINT and settings.AZURE_SEARCH_KEY and settings.AZURE_SEARCH_INDEX
+    SEARCH_AVAILABLE = settings.AZURE_SEARCH_ENDPOINT and settings.AZURE_SEARCH_KEY and settings.AZURE_SEARCH_INDEX_NAME
 except Exception:
     SEARCH_AVAILABLE = False
 
@@ -15,7 +15,7 @@ search_client = None
 if SEARCH_AVAILABLE:
     search_client = SearchClient(
         endpoint=settings.AZURE_SEARCH_ENDPOINT,
-        index_name=settings.AZURE_SEARCH_INDEX,
+        index_name=settings.AZURE_SEARCH_INDEX_NAME,
         credential=AzureKeyCredential(settings.AZURE_SEARCH_KEY)
     )
 
