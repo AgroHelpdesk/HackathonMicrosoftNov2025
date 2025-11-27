@@ -6,12 +6,45 @@ Supports Azure Key Vault integration for secure secrets management.
 
 Note: All environment variable names use HYPHENS (-) instead of underscores (_)
 to maintain consistency with Azure Key Vault naming requirements.
+
+When USE-KEY-VAULT is enabled, secrets are automatically retrieved from Azure Key Vault
+using Managed Identity authentication, with fallback to environment variables.
 """
 
+import os
 from typing import Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _get_secret_or_env(secret_name: str, default: Optional[str] = None) -> Optional[str]:
+    """Get secret from Key Vault or environment variable.
+    
+    If USE-KEY-VAULT is enabled, tries to get from Key Vault first,
+    then falls back to environment variable.
+    
+    Args:
+        secret_name: Name of the secret/environment variable
+        default: Default value if not found
+        
+    Returns:
+        Secret value or default
+    """
+    use_kv = os.getenv("USE-KEY-VAULT", "false").lower() in ("true", "1", "yes")
+    
+    if use_kv:
+        try:
+            from app.config.keyvault import get_secret_or_env
+            value = get_secret_or_env(secret_name)
+            if value is not None:
+                return value
+        except Exception as e:
+            # If Key Vault fails, fall back to env var
+            pass
+    
+    # Fall back to environment variable
+    return os.getenv(secret_name, default)
 
 
 class Settings(BaseSettings):
@@ -34,70 +67,70 @@ class Settings(BaseSettings):
 
     # Azure OpenAI
     OPENAI_ENDPOINT: str = Field(
-        ..., 
+        default_factory=lambda: _get_secret_or_env("OPENAI-ENDPOINT", ""),
         description="Azure OpenAI endpoint URL",
         alias="OPENAI-ENDPOINT"
     )
     OPENAI_KEY: str = Field(
-        ..., 
+        default_factory=lambda: _get_secret_or_env("OPENAI-KEY", ""),
         description="Azure OpenAI API key",
         alias="OPENAI-KEY"
     )
     OPENAI_DEPLOYMENT: str = Field(
-        default="gpt-4o-mini", 
+        default_factory=lambda: _get_secret_or_env("OPENAI-DEPLOYMENT", "gpt-4o-mini"),
         description="Azure OpenAI deployment name",
         alias="OPENAI-DEPLOYMENT"
     )
     OPENAI_API_VERSION: str = Field(
-        default="2024-02-15-preview", 
+        default_factory=lambda: _get_secret_or_env("OPENAI-API-VERSION", "2024-02-15-preview"),
         description="Azure OpenAI API version",
         alias="OPENAI-API-VERSION"
     )
 
     # Azure Communication Services (ACS)
     ACS_ENDPOINT: str = Field(
-        ..., 
+        default_factory=lambda: _get_secret_or_env("ACS-ENDPOINT", ""),
         description="Azure Communication Services endpoint URL",
         alias="ACS-ENDPOINT"
     )
     ACS_ACCESS_KEY: str = Field(
-        ..., 
+        default_factory=lambda: _get_secret_or_env("ACS-ACCESS-KEY", ""),
         description="Azure Communication Services access key",
         alias="ACS-ACCESS-KEY"
     )
 
     # Azure Cognitive Search (Optional)
     AZURE_SEARCH_ENDPOINT: Optional[str] = Field(
-        default=None, 
+        default_factory=lambda: _get_secret_or_env("AZURE-SEARCH-ENDPOINT"),
         description="Azure Cognitive Search endpoint URL",
         alias="AZURE-SEARCH-ENDPOINT"
     )
     AZURE_SEARCH_KEY: Optional[str] = Field(
-        default=None, 
+        default_factory=lambda: _get_secret_or_env("AZURE-SEARCH-KEY"),
         description="Azure Cognitive Search API key",
         alias="AZURE-SEARCH-KEY"
     )
     AZURE_SEARCH_INDEX_NAME: Optional[str] = Field(
-        default=None, 
+        default_factory=lambda: _get_secret_or_env("AZURE-SEARCH-INDEX"),
         description="Azure Cognitive Search index name",
         alias="AZURE-SEARCH-INDEX"
     )
 
     # Session store (Redis) optional
     REDIS_URL: Optional[str] = Field(
-        default=None, 
+        default_factory=lambda: _get_secret_or_env("REDIS-URL"),
         description="Redis connection URL for session storage",
         alias="REDIS-URL"
     )
     
     # Azure Functions for Work Orders
     FUNCTIONS_URL: Optional[str] = Field(
-        default="http://localhost:7071",
+        default_factory=lambda: _get_secret_or_env("FUNCTIONS-URL", "http://localhost:7071"),
         description="Azure Functions base URL for work order operations",
         alias="FUNCTIONS-URL"
     )
     FUNCTIONS_KEY: Optional[str] = Field(
-        default=None,
+        default_factory=lambda: _get_secret_or_env("FUNCTIONS-KEY"),
         description="Azure Functions access key for authentication",
         alias="FUNCTIONS-KEY"
     )
