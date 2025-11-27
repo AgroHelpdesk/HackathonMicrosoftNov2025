@@ -114,7 +114,8 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
-          package: ${{ env.WORKING_DIRECTORY }}
+          package: ./AgroHelpDesk/backend
+          clean: true
 
       - name: Azure Logout
         if: always()
@@ -166,7 +167,8 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
-          package: ${{ env.WORKING_DIRECTORY }}
+          package: ./AgroHelpDesk/backend
+          clean: true
 
       - name: Azure Logout
         if: always()
