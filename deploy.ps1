@@ -53,7 +53,7 @@ $ErrorActionPreference = "Stop"
 $OriginalLocation = Get-Location
 
 # Refresh PATH environment variable to pick up recently installed tools
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 
 # Script paths
 $RootDir = $PSScriptRoot
@@ -389,14 +389,14 @@ if (-not $SkipBackendDeploy) {
         --name $($config.functionAppName) `
         --resource-group $($config.resourceGroupName) `
         --settings `
-            "COSMOS_CONNECTION_STRING=$cosmosConnString" `
-            "COSMOS_DATABASE_NAME=$($config.cosmosDbDatabaseName)" `
-            "SEARCH_ENDPOINT=https://$($config.aiSearchServiceName).search.windows.net" `
-            "SEARCH_KEY=$searchKey" `
-            "SEARCH_INDEX_NAME=$($config.searchIndexName)" `
-            "OPENAI_ENDPOINT=$openaiEndpoint" `
-            "OPENAI_API_KEY=$openaiKey" `
-            "OPENAI_DEPLOYMENT_NAME=gpt-4o" `
+        "COSMOS_CONNECTION_STRING=$cosmosConnString" `
+        "COSMOS_DATABASE_NAME=$($config.cosmosDbDatabaseName)" `
+        "SEARCH_ENDPOINT=https://$($config.aiSearchServiceName).search.windows.net" `
+        "SEARCH_KEY=$searchKey" `
+        "SEARCH_INDEX_NAME=$($config.searchIndexName)" `
+        "OPENAI_ENDPOINT=$openaiEndpoint" `
+        "OPENAI_API_KEY=$openaiKey" `
+        "OPENAI_DEPLOYMENT_NAME=gpt-4o" `
         --output none
     
     Write-Success "App settings configured"
@@ -492,6 +492,42 @@ if (-not $SkipFrontendDeploy) {
         Set-Location $RootDir
     }
 }
+
+# ============================================================================
+# STEP 10: Configure CORS
+# ============================================================================
+Write-Section "STEP 10: Configuring CORS"
+
+Write-Step "Configuring CORS for Function App..."
+
+$swaUrl = az staticwebapp show `
+    --name $($config.staticWebAppName) `
+    --resource-group $($config.resourceGroupName) `
+    --query "defaultHostname" `
+    --output tsv 2>$null
+
+if ($swaUrl) {
+    $fullSwaUrl = "https://$swaUrl"
+    Write-Info "Adding $fullSwaUrl to allowed origins..."
+    
+    az functionapp cors add `
+        --name $($config.functionAppName) `
+        --resource-group $($config.resourceGroupName) `
+        --allowed-origins $fullSwaUrl `
+        --output none
+        
+    Write-Success "Added Static Web App to CORS"
+}
+
+# Add localhost for development
+Write-Info "Adding localhost to allowed origins..."
+az functionapp cors add `
+    --name $($config.functionAppName) `
+    --resource-group $($config.resourceGroupName) `
+    --allowed-origins "http://localhost:5173" "http://localhost:4173" `
+    --output none
+
+Write-Success "CORS configured successfully"
 
 # ============================================================================
 # DEPLOYMENT COMPLETE

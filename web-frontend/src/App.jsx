@@ -1,36 +1,30 @@
-import React, { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react"
-import {
-  Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Avatar,
-  useTheme as useMuiTheme,
-  useMediaQuery,
-  Container,
-  Paper
-} from '@mui/material'
 import { Menu as MenuIcon } from '@mui/icons-material'
-import Dashboard from './components/Dashboard'
-import Chat from './components/Chat'
-import Metrics from './components/Metrics'
-import MapView from './components/MapView'
+import {
+    AppBar,
+    Avatar,
+    Box,
+    IconButton,
+    Toolbar,
+    Typography,
+    useMediaQuery,
+    useTheme as useMuiTheme,
+} from '@mui/material'
+import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider } from '@mui/material/styles'
+import { useState } from 'react'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import AgentWorkflow from './components/AgentWorkflow'
+import Chat from './components/Chat'
+import Dashboard from './components/Dashboard'
+import MapView from './components/MapView'
+import Metrics from './components/Metrics'
 import Sidebar from './components/Sidebar'
-import { SignInButton } from './components/Auth/SignInButton'
-import { SignOutButton } from './components/Auth/SignOutButton'
 import theme from './theme/theme'
 
 function AppShell() {
   const muiTheme = useMuiTheme()
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { accounts } = useMsal()
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -76,13 +70,12 @@ function AppShell() {
                     User
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {accounts[0] ? accounts[0].name : 'User'}
+                    Demo User
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40, fontWeight: 600 }}>
-                  {accounts[0] ? accounts[0].name.charAt(0) : 'U'}
+                  D
                 </Avatar>
-                <SignOutButton />
               </Box>
             )}
           </Toolbar>
@@ -122,41 +115,11 @@ function AppShell() {
   )
 }
 
-function LoginScreen() {
-  return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
-    }}>
-      <Container maxWidth="sm">
-        <Paper elevation={3} sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
-          <Box sx={{ fontSize: '4rem', mb: 2 }}>🌿</Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            AgriFlow AI
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
-            Intelligent Farm Management System
-          </Typography>
-          <SignInButton />
-        </Paper>
-      </Container>
-    </Box>
-  )
-}
-
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthenticatedTemplate>
-        <AppShell />
-      </AuthenticatedTemplate>
-      <UnauthenticatedTemplate>
-        <LoginScreen />
-      </UnauthenticatedTemplate>
+      <AppShell />
     </ThemeProvider>
   )
 }
