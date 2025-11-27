@@ -60,9 +60,10 @@ jobs:
           python -m compileall -q app/
 
       - name: Create clean ZIP package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          cd ${{ env.WORKING_DIRECTORY }}
-          zip -r ../backend.zip * .[^.]*
+          # ZIP gerado sempre na raiz do repositório
+          zip -r ../../backend.zip ./*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -98,7 +99,6 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
-            # App settings
             az webapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
@@ -109,7 +109,6 @@ jobs:
                 ENVIRONMENT=development \
                 LOG_LEVEL=INFO
 
-            # Python runtime
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
@@ -153,7 +152,6 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
-            # App settings
             az webapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
@@ -164,7 +162,6 @@ jobs:
                 ENVIRONMENT=production \
                 LOG_LEVEL=WARNING
 
-            # Python runtime
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
