@@ -1,0 +1,21 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "python",
+        "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+        "COSMOS_ENDPOINT": "https://your-cosmos-account.documents.azure.com:443/",
+        "COSMOS_KEY": "your_cosmos_primary_key_here",
+        "COSMOS_DATABASE_NAME": "agrohelpdesk",
+        "COSMOS_CONTAINER_NAME": "workorders",
+        "USE_MANAGED_IDENTITY": "false",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=your-key;IngestionEndpoint=https://brazilsouth-1.in.applicationinsights.azure.com/",
+        "LOG_LEVEL": "INFO",
+        "ENABLE_DETAILED_LOGGING": "true"
+    },
+    "Host": {
+        "LocalHttpPort": 7071,
+        "CORS": "*",
+        "CORSCredentials": false
+    }
+}
