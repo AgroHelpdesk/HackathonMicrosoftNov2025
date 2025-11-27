@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+httpx
+openai
+python-dotenv
+pydantic
+pydantic-settings
+azure-search-documents
+azure-identity
+azure-keyvault-secrets
+azure-communication-chat
+azure-communication-identity
+aiohttp
+requests
+semantic-kernel>=1.0.0
+azure-ai-inference
