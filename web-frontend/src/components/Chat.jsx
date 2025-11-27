@@ -17,6 +17,10 @@ const mockConversations = {
     { sender: 'user', text: 'My harvester is vibrating strongly in plot 12.', ts: '2025-11-14T06:00:00' },
     { sender: 'agent', text: 'Understood. I will check your machine now.', ts: '2025-11-14T06:01:00' },
     { sender: 'agent', text: 'Carlos, I checked the telemetry of CH670-02 and confirmed vibration above the limit. This may indicate wear or something stuck in the rotor. For safety, stop the machine now. I activated mechanic João Lima, who has already received your location and failure data. I will notify when he is on the way.', ts: '2025-11-14T06:05:00' }
+  ],
+  'T-003': [
+    { sender: 'user', text: 'Checked my urea stock.', ts: '2025-11-13T12:00:30' },
+    { sender: 'agent', text: 'I’ve checked your urea stock levels. The stock is currently low, so it’s necessary to purchase more to avoid shortages.', ts: '2025-11-13T12:00:45' }
   ]
 }
 
@@ -42,7 +46,7 @@ export default function Chat({ ticketId: propTicketId, compact = false }) {
   }
 
   return (
-    <Box sx={{ maxWidth: { xs: '100%', md: 900 }, mx: 'auto', px: { xs: spacing[2], sm: spacing[4] } }}>
+    <Box sx={{ maxWidth: { xs: '100%', md: 700 }, mx: 'auto', px: { xs: spacing[2], sm: spacing[4] } }}>
       <Box sx={{ mb: { xs: spacing[4], sm: spacing[6] } }}>
         <Typography variant="h4" sx={{ fontWeight: typography.fontWeight.bold, mb: spacing[1], fontSize: { xs: typography.fontSize['2xl'], sm: typography.fontSize['3xl'] }, display: 'flex', alignItems: 'center', gap: spacing[2] }}>
           💬 Chat Simulation — {ticketId}
