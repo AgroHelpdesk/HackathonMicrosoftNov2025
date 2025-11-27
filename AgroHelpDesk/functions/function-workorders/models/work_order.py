@@ -4,7 +4,7 @@ This module defines Pydantic models for work order operations,
 ensuring type safety and validation across the function app.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, field_validator
@@ -22,22 +22,22 @@ class WorkOrderStatus(str, Enum):
 
 class WorkOrderPriority(str, Enum):
     """Work order priority levels."""
-    BAIXA = "baixa"
-    MEDIA = "media"
-    ALTA = "alta"
-    CRITICA = "critica"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 class WorkOrderCategory(str, Enum):
     """Work order category classification."""
-    MAQUINARIO = "maquinario"
-    IRRIGACAO = "irrigacao"
-    PLANTIO = "plantio"
-    COLHEITA = "colheita"
-    INSUMOS = "insumos"
-    SOLO = "solo"
-    PRAGA = "praga"
-    OUTRO = "outro"
+    MACHINERY = "machinery"
+    IRRIGATION = "irrigation"
+    PLANTING = "planting"
+    HARVESTING = "harvesting"
+    INPUTS = "inputs"
+    SOIL = "soil"
+    PEST = "pest"
+    OTHER = "other"
 
 
 class WorkOrderCreate(BaseModel):
@@ -60,7 +60,7 @@ class WorkOrderCreate(BaseModel):
         description="Category of the work order"
     )
     priority: WorkOrderPriority = Field(
-        default=WorkOrderPriority.MEDIA,
+        default=WorkOrderPriority.MEDIUM,
         description="Priority level"
     )
     assigned_specialist: str = Field(
@@ -106,15 +106,15 @@ class WorkOrderCreate(BaseModel):
         use_enum_values = True
         json_schema_extra = {
             "example": {
-                "title": "Falha no sistema de irrigação",
-                "description": "Gotejamento irregular detectado no talhão A3",
-                "category": "irrigacao",
-                "priority": "alta",
-                "assigned_specialist": "Técnico de Irrigação",
+                "title": "Irrigation system failure",
+                "description": "Irregular dripping detected in field A3",
+                "category": "irrigation",
+                "priority": "high",
+                "assigned_specialist": "Irrigation Technician",
                 "machine_id": "IRRIG-001",
                 "field_id": "A3",
                 "estimated_time_hours": 4.0,
-                "symptoms": "Vazão irregular, baixa pressão"
+                "symptoms": "Irregular flow, low pressure"
             }
         }
 
@@ -151,11 +151,11 @@ class WorkOrder(BaseModel):
     
     # Timestamps
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Creation timestamp"
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Last update timestamp"
     )
     completed_at: Optional[datetime] = Field(
@@ -189,7 +189,7 @@ class WorkOrder(BaseModel):
     @classmethod
     def set_updated_at(cls, v):
         """Ensure updated_at is current."""
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
     
     class Config:
         """Pydantic configuration."""
@@ -201,12 +201,12 @@ class WorkOrder(BaseModel):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "order_id": "OS-A1B2C3D4",
-                "title": "Falha no sistema de irrigação",
-                "description": "Gotejamento irregular detectado no talhão A3",
-                "category": "irrigacao",
-                "priority": "alta",
+                "title": "Irrigation system failure",
+                "description": "Irregular dripping detected in field A3",
+                "category": "irrigation",
+                "priority": "high",
                 "status": "pending",
-                "assigned_specialist": "Técnico de Irrigação",
+                "assigned_specialist": "Irrigation Technician",
                 "machine_id": "IRRIG-001",
                 "field_id": "A3",
                 "estimated_time_hours": 4.0,

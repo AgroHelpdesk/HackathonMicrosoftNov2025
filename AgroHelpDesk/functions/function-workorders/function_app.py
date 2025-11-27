@@ -45,8 +45,8 @@ async def create_work_order(req: func.HttpRequest) -> func.HttpResponse:
     {
         "title": "Issue title",
         "description": "Detailed description",
-        "category": "maquinario|irrigacao|plantio|colheita|insumos|solo|praga|outro",
-        "priority": "baixa|media|alta|critica",
+        "category": "machinery|irrigation|planting|harvesting|inputs|soil|pest|other",
+        "priority": "low|medium|high|critical",
         "assigned_specialist": "Specialist name",
         "machine_id": "Optional machine ID",
         "field_id": "Optional field ID",
