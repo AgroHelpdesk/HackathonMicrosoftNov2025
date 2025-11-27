@@ -79,6 +79,12 @@ export const RUNBOOKS = [
     name: 'Pre-fill ART',
     description: 'Generates preliminary PDF for signature',
     safe: false
+  },
+    {
+    id: 'RB-05',
+    name: 'Compliance Check',
+    description: 'Validates licenses and environmental permits',
+    safe: false
   }
 ]
 

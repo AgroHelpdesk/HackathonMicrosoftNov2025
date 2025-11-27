@@ -33,7 +33,7 @@ export default function Dashboard() {
       </Box>
 
       <Grid container spacing={{ xs: 2, sm: 3 }}>
-        <Grid item xs={12} lg={7}>
+        <Grid item xs={6} lg={3}>
           <Card sx={{ background: 'linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%)' }}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
@@ -87,7 +87,7 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={5}>
+        <Grid item xs={6} lg={3}>
           <Card sx={{ background: 'linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%)', height: 'fit-content' }}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
@@ -152,7 +152,7 @@ export default function Dashboard() {
                     💬 Chat with Client
                   </Typography>
                   <Box sx={{ maxHeight: 700, overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 2, p: 1 }}>
-                    <Chat ticketId={selected.id} compact={true} />
+                    <Chat key={selected.id} ticketId={selected.id} compact={true} />
                   </Box>
                   <CardActions sx={{ justifyContent: 'flex-end', pt: 2, px: 0 }}>
                     <Button

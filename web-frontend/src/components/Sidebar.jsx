@@ -40,7 +40,7 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ fontSize: '1.9rem', fontWeight: 'bold' }}>🌿</Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>AgriFlow AI</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>AgroHelpdesk</Typography>
             {!isMobile && (
               <Typography variant="caption" sx={{ letterSpacing: '0.05em', color: 'text.secondary' }}>
                 Intelligent Farm
