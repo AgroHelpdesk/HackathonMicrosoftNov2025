@@ -4,10 +4,10 @@ This module manages all configuration settings using Pydantic Settings,
 loading values from environment variables and .env file.
 Supports Azure Key Vault integration for secure secrets management.
 
-Note: All environment variable names use HYPHENS (-) instead of underscores (_)
-to maintain consistency with Azure Key Vault naming requirements.
+Note: Environment variables can use either HYPHENS (-) for Key Vault compatibility
+or UNDERSCORES (_) for Azure App Settings compatibility. Both formats are supported.
 
-When USE-KEY-VAULT is enabled, secrets are automatically retrieved from Azure Key Vault
+When USE_KEY_VAULT is enabled, secrets are automatically retrieved from Azure Key Vault
 using Managed Identity authentication, with fallback to environment variables.
 """
 
@@ -21,7 +21,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 def _get_secret_or_env(secret_name: str, default: Optional[str] = None) -> Optional[str]:
     """Get secret from Key Vault or environment variable.
     
-    If USE-KEY-VAULT is enabled, tries to get from Key Vault first,
+    Supports both hyphenated (KEY-NAME) and underscored (KEY_NAME) formats.
+    
+    If USE_KEY_VAULT is enabled, tries to get from Key Vault first,
     then falls back to environment variable.
     
     Args:
@@ -31,11 +33,12 @@ def _get_secret_or_env(secret_name: str, default: Optional[str] = None) -> Optio
     Returns:
         Secret value or default
     """
-    use_kv = os.getenv("USE-KEY-VAULT", "false").lower() in ("true", "1", "yes")
+    use_kv = os.getenv("USE_KEY_VAULT", "false").lower() in ("true", "1", "yes")
     
     if use_kv:
         try:
             from app.config.keyvault import get_secret_or_env
+            # Try hyphenated version for Key Vault
             value = get_secret_or_env(secret_name)
             if value is not None:
                 return value
@@ -43,8 +46,13 @@ def _get_secret_or_env(secret_name: str, default: Optional[str] = None) -> Optio
             # If Key Vault fails, fall back to env var
             pass
     
-    # Fall back to environment variable
-    return os.getenv(secret_name, default)
+    # Try both formats: hyphenated and underscored
+    value = os.getenv(secret_name)  # Try hyphenated first
+    if value is None:
+        # Try underscored version for Azure App Settings
+        value = os.getenv(secret_name.replace("-", "_"))
+    
+    return value or default
 
 
 class Settings(BaseSettings):
