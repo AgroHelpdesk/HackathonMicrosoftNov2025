@@ -212,7 +212,7 @@ FUNCTIONS-URL=http://localhost:7071
 # Azure Cognitive Search - RAG (Required for AgroBrain)
 AZURE-SEARCH-ENDPOINT=https://YOUR_RESOURCE.search.windows.net
 AZURE-SEARCH-KEY=your_search_key_here
-AZURE-SEARCH-INDEX=agrohelpdesk-kb
+AZURE-SEARCH-INDEX-NAME=agrohelpdesk-kb
 
 # Application (Required)
 ENVIRONMENT=development
