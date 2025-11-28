@@ -76,12 +76,18 @@ jobs:
           find . -name "*.pyo" -delete
           rm -f local.settings.json
           rm -rf .pytest_cache
+          
+          # List files that will be deployed (for debugging)
+          echo "Files to be deployed:"
+          find . -type f | sort
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.WORKING_DIRECTORY }}
+          retention-days: 1
+          include-hidden-files: false
 
   # =======================================
   # DEPLOY DEV
@@ -109,6 +115,13 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Verify downloaded files
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          echo "Files downloaded for deployment:"
+          find . -type f | sort
+          echo "Total files: $(find . -type f | wc -l)"
 
       - name: Configure Function App Settings
         uses: azure/cli@v2
