@@ -22,9 +22,9 @@ class KeyVaultClient:
 
         Args:
             vault_url: Azure Key Vault URL. If not provided, reads from
-                      AZURE-KEY-VAULT-URL environment variable.
+                      AZURE_KEY_VAULT_URL environment variable.
         """
-        self.vault_url = vault_url or os.getenv("AZURE-KEY-VAULT-URL")
+        self.vault_url = vault_url or os.getenv("AZURE_KEY_VAULT_URL")
         
         if not self.vault_url:
             logger.warning("Azure Key Vault URL not configured. Secrets will not be loaded from Key Vault.")
