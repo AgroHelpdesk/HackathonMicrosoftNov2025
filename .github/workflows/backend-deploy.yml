@@ -117,7 +117,16 @@ jobs:
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
-                LOG_LEVEL=INFO
+                LOG_LEVEL=INFO \
+                OPENAI_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-ENDPOINT/)" \
+                OPENAI_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-KEY/)" \
+                OPENAI_DEPLOYMENT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-DEPLOYMENT/)" \
+                OPENAI_API_VERSION="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-API-VERSION/)" \
+                ACS_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/ACS-ENDPOINT/)" \
+                ACS_ACCESS_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/ACS-ACCESS-KEY/)" \
+                AZURE_SEARCH_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-ENDPOINT/)" \
+                AZURE_SEARCH_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-KEY/)" \
+                AZURE_SEARCH_INDEX_NAME="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-INDEX-NAME/)"
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
@@ -177,7 +186,17 @@ jobs:
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
-                LOG_LEVEL=WARNING
+                LOG_LEVEL=WARNING \
+                OPENAI_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-ENDPOINT/)" \
+                OPENAI_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-KEY/)" \
+                OPENAI_DEPLOYMENT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-DEPLOYMENT/)" \
+                OPENAI_API_VERSION="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/OPENAI-API-VERSION/)" \
+                ACS_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/ACS-ENDPOINT/)" \
+                ACS_ACCESS_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/ACS-ACCESS-KEY/)" \
+                AZURE_SEARCH_ENDPOINT="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-ENDPOINT/)" \
+                AZURE_SEARCH_KEY="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-KEY/)" \
+                AZURE_SEARCH_INDEX="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/AZURE-SEARCH-INDEX/)" \
+                REDIS_URL="@Microsoft.KeyVault(SecretUri=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/secrets/REDIS-URL/)"
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
