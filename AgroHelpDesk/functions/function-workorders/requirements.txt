@@ -7,6 +7,9 @@ azure-cosmos>=4.7.0
 # Identity and Authentication
 azure-identity>=1.17.0
 
+# Azure Key Vault for secrets management
+azure-keyvault-secrets>=4.8.0
+
 # Pydantic for data validation
 pydantic>=2.10.0
 pydantic-settings>=2.6.0

@@ -1,0 +1,197 @@
+name: Azure Functions CI/CD - Work Orders Function
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'AgroHelpDesk/functions/function-workorders/**'
+      - '.github/workflows/function-workorders-deploy.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'AgroHelpDesk/functions/function-workorders/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  WORKING_DIRECTORY: './AgroHelpDesk/functions/function-workorders'
+  ARTIFACT_NAME: 'function-workorders-package'
+
+jobs:
+
+  # =======================================
+  # BUILD JOB
+  # =======================================
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: '${{ env.WORKING_DIRECTORY }}/requirements.txt'
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        continue-on-error: true
+        run: |
+          pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=__pycache__
+
+      - name: Validate code
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          python -m py_compile function_app.py
+          python -m compileall -q .
+
+      - name: Install Azure Functions Core Tools
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+          sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+          sudo apt-get update
+          sudo apt-get install azure-functions-core-tools-4
+
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Remove cache directories and development files
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.pyc" -delete
+          find . -name "*.pyo" -delete
+          rm -f local.settings.json
+          rm -rf .pytest_cache
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.WORKING_DIRECTORY }}
+
+  # =======================================
+  # DEPLOY DEV
+  # =======================================
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment:
+      name: Development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Configure Function App Settings
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az functionapp config appsettings set \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_FUNCTION_NAME_DEV }} \
+              --settings \
+                USE_KEY_VAULT=true \
+                AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
+                ENVIRONMENT=development \
+                LOG_LEVEL=INFO \
+                FUNCTIONS_WORKER_RUNTIME=python \
+                FUNCTIONS_EXTENSION_VERSION=~4
+
+      - name: Deploy to Azure Function App
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            cd ${{ env.WORKING_DIRECTORY }}
+            az functionapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_FUNCTION_NAME_DEV }} \
+              --src $(zip -r ../function-package.zip . && echo "../function-package.zip")
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
+
+  # =======================================
+  # DEPLOY PROD
+  # =======================================
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: Production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Configure Function App Settings
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az functionapp config appsettings set \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_FUNCTION_NAME_PROD }} \
+              --settings \
+                USE_KEY_VAULT=true \
+                AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
+                ENVIRONMENT=production \
+                LOG_LEVEL=WARNING \
+                FUNCTIONS_WORKER_RUNTIME=python \
+                FUNCTIONS_EXTENSION_VERSION=~4
+
+      - name: Deploy to Azure Function App
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            cd ${{ env.WORKING_DIRECTORY }}
+            zip -r ../function-package.zip .
+            az functionapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_FUNCTION_NAME_PROD }} \
+              --src ../function-package.zip
+
+      - name: Azure Logout
+        if: always()
+        run: az logout

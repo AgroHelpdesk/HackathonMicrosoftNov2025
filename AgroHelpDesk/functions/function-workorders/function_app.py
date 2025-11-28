@@ -11,6 +11,7 @@ from typing import Optional
 import azure.functions as func
 from pydantic import ValidationError
 
+from config.settings import get_settings
 from models.work_order import WorkOrderCreate
 from services.cosmos_service import CosmosService, CosmosDBError
 from utils.logger import get_logger, log_function_start, log_function_end, log_error
@@ -26,6 +27,10 @@ from utils.response_builder import (
 # Initialize Function App
 app = func.FunctionApp()
 logger = get_logger(__name__)
+
+# Initialize settings (this will also initialize Key Vault if configured)
+settings = get_settings()
+logger.info("Function App initialized with centralized configuration")
 
 # Initialize Cosmos Service (singleton)
 cosmos_service = CosmosService()
@@ -414,18 +419,29 @@ async def health_check(req: func.HttpRequest) -> func.HttpResponse:
         "data": {
             "status": "healthy",
             "service": "agrohelpdesk-functions",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "configuration": {
+                "key_vault": "enabled|disabled",
+                "cosmos_db": "connected|not_initialized"
+            }
         },
         "timestamp": "2025-11-26T10:30:00Z"
     }
     """
+    # Get configuration status
+    current_settings = get_settings()
+    configuration_status = {
+        "key_vault": "enabled" if current_settings.use_key_vault else "disabled",
+        "cosmos_db": "connected" if cosmos_service._client else "not_initialized"
+    }
+    
     return func.HttpResponse(
         **build_success_response(
             data={
                 "status": "healthy",
                 "service": "agrohelpdesk-functions",
                 "version": "1.0.0",
-                "cosmos_db": "connected" if cosmos_service._client else "not_initialized"
+                "configuration": configuration_status
             }
         )
     )
