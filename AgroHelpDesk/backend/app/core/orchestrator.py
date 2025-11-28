@@ -115,14 +115,14 @@ class Orchestrator:
                 ))
                 
                 clarification = ClarificationRequest(
-                    reason="Cumprimento inicial",
-                    missing_info=["Descrição do problema ou dúvida"],
+                    reason="Initial greeting",
+                    missing_info=["Description of the problem or question"],
                     suggested_questions=[
                         greeting_response,
-                        "Qual é a sua dúvida ou necessidade?",
-                        "Pode me contar o que está acontecendo?"
+                        "What is your question or need?",
+                        "Can you tell me what is happening?"
                     ],
-                    current_understanding="Cumprimento recebido"
+                    current_understanding="Greeting received"
                 )
                 
                 return OrchestratorResponse(
