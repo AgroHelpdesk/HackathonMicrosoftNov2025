@@ -6,14 +6,33 @@ for handling work order operations with Cosmos DB persistence.
 
 import json
 import time
+import sys
+import logging
 from typing import Optional
+
+# Configure basic logging BEFORE anything else
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+startup_logger = logging.getLogger("startup")
+startup_logger.info("=" * 80)
+startup_logger.info("FUNCTION APP STARTUP - BEGIN")
+startup_logger.info(f"Python version: {sys.version}")
+startup_logger.info(f"Python path: {sys.path}")
+startup_logger.info("=" * 80)
 
 import azure.functions as func
 from pydantic import ValidationError
 
+startup_logger.info("Importing config.settings...")
 from config.settings import get_settings
+startup_logger.info("Importing models.work_order...")
 from models.work_order import WorkOrderCreate
+startup_logger.info("Importing services.cosmos_service...")
 from services.cosmos_service import CosmosService, CosmosDBError
+startup_logger.info("Importing utils...")
 from utils.logger import get_logger, log_function_start, log_function_end, log_error
 from utils.validators import validate_work_order_data
 from utils.response_builder import (
@@ -23,30 +42,41 @@ from utils.response_builder import (
     build_not_found_response,
     build_server_error_response
 )
+startup_logger.info("All imports completed successfully")
 
 # Initialize Function App
+startup_logger.info("Creating FunctionApp instance...")
 app = func.FunctionApp()
+startup_logger.info("FunctionApp instance created")
 logger = get_logger(__name__)
 
 # Initialize settings (this will also initialize Key Vault if configured)
 try:
+    startup_logger.info("Initializing settings...")
     settings = get_settings()
     logger.info("Function App initialized with centralized configuration")
+    startup_logger.info("Settings initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize settings: {e}")
+    startup_logger.error(f"Failed to initialize settings: {e}", exc_info=True)
     # Create minimal settings to allow health check to work
     settings = None
 
 # Initialize Cosmos Service (singleton)
 try:
     if settings:
+        startup_logger.info("Initializing Cosmos Service...")
         cosmos_service = CosmosService()
+        startup_logger.info("Cosmos Service initialized successfully")
     else:
         logger.warning("Cosmos Service not initialized due to settings error")
         cosmos_service = None
 except Exception as e:
-    logger.error(f"Failed to initialize Cosmos Service: {e}")
+    startup_logger.error(f"Failed to initialize Cosmos Service: {e}", exc_info=True)
     cosmos_service = None
+
+startup_logger.info("=" * 80)
+startup_logger.info("FUNCTION APP STARTUP - COMPLETE")
+startup_logger.info("=" * 80)
 
 
 @app.route(
@@ -470,3 +500,14 @@ async def health_check(req: func.HttpRequest) -> func.HttpResponse:
             }),
             mimetype="application/json"
         )
+
+# Log registered functions at module load
+startup_logger.info("=" * 80)
+startup_logger.info("REGISTERED FUNCTIONS:")
+startup_logger.info(f"Total functions registered: 5")
+startup_logger.info("- create_work_order (POST /api/workorders)")
+startup_logger.info("- get_work_order (GET /api/workorders/{order_id})")
+startup_logger.info("- update_work_order_status (PATCH /api/workorders/{order_id}/status)")
+startup_logger.info("- list_work_orders (GET /api/workorders)")
+startup_logger.info("- health_check (GET /api/health)")
+startup_logger.info("=" * 80)
