@@ -100,12 +100,28 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Create a clean zip without .git, venv, __pycache__, etc.
+          zip -r ../../deploy.zip . \
+            -x "*.git*" \
+            -x "*venv/*" \
+            -x "*__pycache__/*" \
+            -x "*.pyc" \
+            -x "*.env"
+
+      - name: Deploy to Azure Web App with Remote Build
+        uses: azure/cli@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
-          package: ${{ env.WORKING_DIRECTORY }}
-        id: deploy-to-webapp
+          inlineScript: |
+            # Deploy using ZipDeploy API with remote build enabled
+            # This forces Oryx to run the build on Azure
+            az webapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
+              --src ../../deploy.zip \
+              --build-remote true
 
       - name: Azure Logout
         if: always()
@@ -152,12 +168,28 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Create a clean zip without .git, venv, __pycache__, etc.
+          zip -r ../../deploy.zip . \
+            -x "*.git*" \
+            -x "*venv/*" \
+            -x "*__pycache__/*" \
+            -x "*.pyc" \
+            -x "*.env"
+
+      - name: Deploy to Azure Web App with Remote Build
+        uses: azure/cli@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
-          package: ${{ env.WORKING_DIRECTORY }}
-        id: deploy-to-webapp
+          inlineScript: |
+            # Deploy using ZipDeploy API with remote build enabled
+            # This forces Oryx to run the build on Azure
+            az webapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
+              --src ../../deploy.zip \
+              --build-remote true
 
       - name: Azure Logout
         if: always()
