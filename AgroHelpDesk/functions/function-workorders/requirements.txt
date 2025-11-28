@@ -1,5 +1,5 @@
-# Azure Functions Core
-azure-functions>=1.20.0
+# Azure Functions Core (Python v2 programming model)
+azure-functions>=1.20.0,<2.0.0
 
 # Cosmos DB SDK
 azure-cosmos>=4.7.0
@@ -11,8 +11,8 @@ azure-identity>=1.17.0
 azure-keyvault-secrets>=4.8.0
 
 # Pydantic for data validation
-pydantic>=2.10.0
-pydantic-settings>=2.6.0
+pydantic>=2.10.0,<3.0.0
+pydantic-settings>=2.6.0,<3.0.0
 
 # Logging and monitoring
 opencensus-ext-azure>=1.1.13
