@@ -106,6 +106,26 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
+      - name: Validate Web App exists
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            echo "Validating Web App: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}"
+            
+            # Check if Web App exists
+            az webapp show \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
+              --query "defaultHostName" -o tsv
+            
+            # Get the SCM URL
+            SCM_URL=$(az webapp show \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
+              --query "enabledHostNames" -o tsv | grep scm || echo "")
+            
+            echo "SCM URL found: $SCM_URL"
+
       - name: Get deployment credentials
         id: get-credentials
         uses: azure/cli@v2
@@ -127,6 +147,15 @@ jobs:
             echo "::add-mask::$PASSWORD"
             echo "username=$USERNAME" >> $GITHUB_OUTPUT
             echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+            
+            # Also export the webapp name for use in curl
+            echo "webapp_name=${{ secrets.AZURE_WEBAPP_NAME_DEV }}" >> $GITHUB_OUTPUT
+
+      - name: Test DNS resolution
+        run: |
+          echo "Testing DNS resolution for ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net"
+          nslookup ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net || true
+          ping -c 2 ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net || true
 
       - name: Deploy with Kudu ZipDeploy API
         run: |
@@ -134,7 +163,7 @@ jobs:
             -u "${{ steps.get-credentials.outputs.username }}:${{ steps.get-credentials.outputs.password }}" \
             -H "Content-Type: application/zip" \
             --data-binary @deploy.zip \
-            https://${{ secrets.AZURE_WEBAPP_NAME_DEV }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
+            https://${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
@@ -187,6 +216,26 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
+      - name: Validate Web App exists
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            echo "Validating Web App: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}"
+            
+            # Check if Web App exists
+            az webapp show \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
+              --query "defaultHostName" -o tsv
+            
+            # Get the SCM URL
+            SCM_URL=$(az webapp show \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
+              --query "enabledHostNames" -o tsv | grep scm || echo "")
+            
+            echo "SCM URL found: $SCM_URL"
+
       - name: Get deployment credentials
         id: get-credentials
         uses: azure/cli@v2
@@ -208,6 +257,15 @@ jobs:
             echo "::add-mask::$PASSWORD"
             echo "username=$USERNAME" >> $GITHUB_OUTPUT
             echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+            
+            # Also export the webapp name for use in curl
+            echo "webapp_name=${{ secrets.AZURE_WEBAPP_NAME_PROD }}" >> $GITHUB_OUTPUT
+
+      - name: Test DNS resolution
+        run: |
+          echo "Testing DNS resolution for ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net"
+          nslookup ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net || true
+          ping -c 2 ${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net || true
 
       - name: Deploy with Kudu ZipDeploy API
         run: |
@@ -215,7 +273,7 @@ jobs:
             -u "${{ steps.get-credentials.outputs.username }}:${{ steps.get-credentials.outputs.password }}" \
             -H "Content-Type: application/zip" \
             --data-binary @deploy.zip \
-            https://${{ secrets.AZURE_WEBAPP_NAME_PROD }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
+            https://${{ steps.get-credentials.outputs.webapp_name }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
