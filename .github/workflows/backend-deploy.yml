@@ -89,6 +89,7 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --settings \
                 SCM_DO_BUILD_DURING_DEPLOYMENT=true \
+                ENABLE_ORYX_BUILD=true \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
@@ -99,14 +100,12 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
-      - name: Wait for App Service restart
-        run: sleep 10
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
           package: ${{ env.WORKING_DIRECTORY }}
+        id: deploy-to-webapp
 
       - name: Azure Logout
         if: always()
@@ -142,6 +141,7 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --settings \
                 SCM_DO_BUILD_DURING_DEPLOYMENT=true \
+                ENABLE_ORYX_BUILD=true \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
@@ -152,14 +152,12 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
-      - name: Wait for App Service restart
-        run: sleep 10
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
           package: ${{ env.WORKING_DIRECTORY }}
+        id: deploy-to-webapp
 
       - name: Azure Logout
         if: always()
