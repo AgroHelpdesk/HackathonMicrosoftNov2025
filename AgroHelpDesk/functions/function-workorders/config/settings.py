@@ -90,13 +90,13 @@ class Settings(BaseSettings):
 
     # Cosmos DB configuration
     cosmos_endpoint: str = Field(
-        default_factory=lambda: _get_secret_or_env("COSMOS_ENDPOINT", ""),
+        default_factory=lambda: _get_secret_or_env("COSMOS-ENDPOINT", ""),
         description="Azure Cosmos DB endpoint URL",
         alias="COSMOS-ENDPOINT"        
     )
     
     cosmos_key: Optional[str] = Field(
-        default_factory=lambda: _get_secret_or_env("COSMOS_KEY"),
+        default_factory=lambda: _get_secret_or_env("COSMOS-KEY"),
         description="Azure Cosmos DB access key",
         alias="COSMOS-KEY"
     )
