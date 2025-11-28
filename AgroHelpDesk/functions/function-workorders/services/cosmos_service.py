@@ -58,6 +58,9 @@ class CosmosService:
                 if not self._endpoint:
                     logger.warning("COSMOS_ENDPOINT is not configured - Cosmos DB will not be available")
                 
+                if not self._key:
+                    logger.warning("COSMOS_KEY is not configured - Cosmos DB will not be available")
+                
                 self._initialized = True
                 logger.info(
                     f"CosmosService initialized for database '{self._database_name}', "
@@ -71,6 +74,14 @@ class CosmosService:
                 self._container_name = "workorders"
                 self._initialized = True
     
+    def is_configured(self) -> bool:
+        """Check if Cosmos DB is properly configured.
+        
+        Returns:
+            True if endpoint and key are configured, False otherwise
+        """
+        return bool(self._endpoint and self._key)
+    
     def _get_client(self) -> CosmosClient:
         """Get or create Cosmos DB client.
         
@@ -82,6 +93,9 @@ class CosmosService:
                 # Use key-based authentication
                 if not self._key:
                     raise ValueError("COSMOS_KEY is required")
+                
+                if not self._endpoint:
+                    raise ValueError("COSMOS_ENDPOINT is required")
                 
                 self._client = CosmosClient(
                     url=self._endpoint,
