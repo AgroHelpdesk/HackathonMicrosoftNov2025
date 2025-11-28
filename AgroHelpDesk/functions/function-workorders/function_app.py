@@ -465,7 +465,7 @@ async def health_check(req: func.HttpRequest) -> func.HttpResponse:
             "version": "1.0.0",
             "configuration": {
                 "key_vault": "enabled|disabled",
-                "cosmos_db": "connected|not_initialized"
+                "cosmos_db": "configured|not_configured"
             }
         },
         "timestamp": "2025-11-26T10:30:00Z"
@@ -476,7 +476,7 @@ async def health_check(req: func.HttpRequest) -> func.HttpResponse:
         current_settings = get_settings() if settings else None
         configuration_status = {
             "key_vault": "enabled" if current_settings and current_settings.use_key_vault else "disabled",
-            "cosmos_db": "connected" if cosmos_service and cosmos_service._client else "not_initialized",
+            "cosmos_db": "configured" if cosmos_service and cosmos_service.is_configured() else "not_configured",
             "settings_loaded": settings is not None
         }
         
