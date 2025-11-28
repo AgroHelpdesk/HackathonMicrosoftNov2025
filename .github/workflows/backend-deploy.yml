@@ -106,15 +106,25 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
-      - name: Deploy with build enabled
+      - name: Deploy with Kudu ZipDeploy API
         uses: azure/cli@v2
         with:
           inlineScript: |
-            az webapp deployment source config-zip \
+            # Get publish profile credentials
+            CREDS=$(az webapp deployment list-publishing-credentials \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --src deploy.zip \
-              --build-remote true
+              --query "{username:publishingUserName,password:publishingPassword}" -o tsv)
+            
+            USERNAME=$(echo $CREDS | awk '{print $1}')
+            PASSWORD=$(echo $CREDS | awk '{print $2}')
+            
+            # Deploy using Kudu API with build flag
+            curl -X POST \
+              -u "$USERNAME:$PASSWORD" \
+              -H "Content-Type: application/zip" \
+              --data-binary @deploy.zip \
+              https://${{ secrets.AZURE_WEBAPP_NAME_DEV }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
@@ -167,15 +177,25 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
-      - name: Deploy with build enabled
+      - name: Deploy with Kudu ZipDeploy API
         uses: azure/cli@v2
         with:
           inlineScript: |
-            az webapp deployment source config-zip \
+            # Get publish profile credentials
+            CREDS=$(az webapp deployment list-publishing-credentials \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
-              --src deploy.zip \
-              --build-remote true
+              --query "{username:publishingUserName,password:publishingPassword}" -o tsv)
+            
+            USERNAME=$(echo $CREDS | awk '{print $1}')
+            PASSWORD=$(echo $CREDS | awk '{print $2}')
+            
+            # Deploy using Kudu API with build flag
+            curl -X POST \
+              -u "$USERNAME:$PASSWORD" \
+              -H "Content-Type: application/zip" \
+              --data-binary @deploy.zip \
+              https://${{ secrets.AZURE_WEBAPP_NAME_PROD }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
