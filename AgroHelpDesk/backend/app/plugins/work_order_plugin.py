@@ -75,14 +75,62 @@ class WorkOrderPlugin:
             f"Creating work order: category={category}, priority={priority}"
         )
         
+        # Translation mappings from Portuguese to English
+        priority_map = {
+            "baixa": "low",
+            "media": "medium",
+            "alta": "high",
+            "critica": "critical",
+            "crítica": "critical",
+            # English values (pass-through)
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "critical": "critical"
+        }
+        
+        category_map = {
+            # Portuguese to English
+            "maquinário": "machinery",
+            "maquinario": "machinery",
+            "irrigação": "irrigation",
+            "irrigacao": "irrigation",
+            "plantio": "planting",
+            "colheita": "harvesting",
+            "insumos": "inputs",
+            "solo": "soil",
+            "praga": "pest",
+            "pragas": "pest",
+            "outro": "other",
+            "outros": "other",
+            # English values (pass-through)
+            "machinery": "machinery",
+            "irrigation": "irrigation",
+            "planting": "planting",
+            "harvesting": "harvesting",
+            "inputs": "inputs",
+            "soil": "soil",
+            "pest": "pest",
+            "other": "other"
+        }
+        
+        # Translate values
+        priority_en = priority_map.get(priority.lower(), "medium")
+        category_en = category_map.get(category.lower(), "other")
+        
+        logger.info(
+            f"Translated values: priority={priority} -> {priority_en}, "
+            f"category={category} -> {category_en}"
+        )
+        
         # Persist to Cosmos DB via Azure Functions (direct HTTP call)
         try:
             url = f"{self.functions_url}/api/workorders"
             payload = {
                 "title": title,
                 "description": description,
-                "category": category,
-                "priority": priority,
+                "category": category_en,  # Use translated value
+                "priority": priority_en,  # Use translated value
                 "assigned_specialist": "Técnico Geral",
                 "estimated_time_hours": 2.0
             }
