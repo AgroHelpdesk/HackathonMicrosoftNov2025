@@ -88,7 +88,7 @@ class KeyVaultClient:
             Secret value from Key Vault or environment variable, or None if not found.
         """
         # Try Key Vault first if enabled
-        use_kv = os.getenv("USE-KEY-VAULT", "false").lower() in ("true", "1", "yes")
+        use_kv = os.getenv("USE_KEY_VAULT", "false").lower() in ("true", "1", "yes")
         
         if use_kv:
             value = self.get_secret(secret_name)

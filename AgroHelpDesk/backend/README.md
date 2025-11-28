@@ -219,8 +219,8 @@ ENVIRONMENT=development
 LOG-LEVEL=INFO
 
 # Azure Key Vault (Implemented - Disabled for local dev, enabled in production)
-USE-KEY-VAULT=false  # Set to true in production with Managed Identity
-# AZURE-KEY-VAULT-URL=https://your-keyvault.vault.azure.net/
+USE_KEY_VAULT=false  # Set to true in production with Managed Identity
+# AZURE_KEY_VAULT_URL=https://your-keyvault.vault.azure.net/
 
 # Optional - Future Features (Not Currently Used)
 # ACS-ENDPOINT=https://YOUR_RESOURCE.communication.azure.com
