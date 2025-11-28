@@ -111,13 +111,15 @@ jobs:
         with:
           inlineScript: |
             # Get publish profile credentials
-            CREDS=$(az webapp deployment list-publishing-credentials \
+            USERNAME=$(az webapp deployment list-publishing-credentials \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --query "{username:publishingUserName,password:publishingPassword}" -o tsv)
+              --query publishingUserName -o tsv)
             
-            USERNAME=$(echo $CREDS | awk '{print $1}')
-            PASSWORD=$(echo $CREDS | awk '{print $2}')
+            PASSWORD=$(az webapp deployment list-publishing-credentials \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
+              --query publishingPassword -o tsv)
             
             # Deploy using Kudu API with build flag
             curl -X POST \
@@ -182,13 +184,15 @@ jobs:
         with:
           inlineScript: |
             # Get publish profile credentials
-            CREDS=$(az webapp deployment list-publishing-credentials \
+            USERNAME=$(az webapp deployment list-publishing-credentials \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
-              --query "{username:publishingUserName,password:publishingPassword}" -o tsv)
+              --query publishingUserName -o tsv)
             
-            USERNAME=$(echo $CREDS | awk '{print $1}')
-            PASSWORD=$(echo $CREDS | awk '{print $2}')
+            PASSWORD=$(az webapp deployment list-publishing-credentials \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
+              --query publishingPassword -o tsv)
             
             # Deploy using Kudu API with build flag
             curl -X POST \
