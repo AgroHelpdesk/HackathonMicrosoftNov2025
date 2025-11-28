@@ -102,11 +102,19 @@ jobs:
       - name: Wait for App Service restart
         run: sleep 10
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: zip -r ../../deploy.zip .
+
+      - name: Deploy with build enabled
+        uses: azure/cli@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
-          package: ${{ env.WORKING_DIRECTORY }}
+          inlineScript: |
+            az webapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
+              --src deploy.zip \
+              --build-remote true
 
       - name: Azure Logout
         if: always()
@@ -155,11 +163,19 @@ jobs:
       - name: Wait for App Service restart
         run: sleep 10
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: zip -r ../../deploy.zip .
+
+      - name: Deploy with build enabled
+        uses: azure/cli@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
-          package: ${{ env.WORKING_DIRECTORY }}
+          inlineScript: |
+            az webapp deployment source config-zip \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+              --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
+              --src deploy.zip \
+              --build-remote true
 
       - name: Azure Logout
         if: always()
