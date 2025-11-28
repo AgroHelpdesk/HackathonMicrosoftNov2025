@@ -161,7 +161,7 @@ npm run preview
 - Material‑UI theme with agricultural green accents.
 - Responsive layout with permanent/temporary sidebar depending on screen size.
 - Cards, chips, badges, and progress bars that reflect ticket state and agent progress.
-- Layouts designed specifically for **demo storytelling** during judging.
+- Layouts designed specifically for **demo storytelling**.
 
 ---
 
