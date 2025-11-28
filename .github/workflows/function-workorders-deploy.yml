@@ -126,14 +126,10 @@ jobs:
                 FUNCTIONS_EXTENSION_VERSION=~4
 
       - name: Deploy to Azure Function App
-        uses: azure/cli@v2
+        uses: Azure/functions-action@v1
         with:
-          inlineScript: |
-            cd ${{ env.WORKING_DIRECTORY }}
-            az functionapp deployment source config-zip \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
-              --name ${{ secrets.AZURE_FUNCTION_NAME_DEV }} \
-              --src $(zip -r ../function-package.zip . && echo "../function-package.zip")
+          app-name: ${{ secrets.AZURE_FUNCTION_NAME_DEV }}
+          package: ${{ env.WORKING_DIRECTORY }}
 
       - name: Azure Logout
         if: always()
@@ -182,15 +178,10 @@ jobs:
                 FUNCTIONS_EXTENSION_VERSION=~4
 
       - name: Deploy to Azure Function App
-        uses: azure/cli@v2
+        uses: Azure/functions-action@v1
         with:
-          inlineScript: |
-            cd ${{ env.WORKING_DIRECTORY }}
-            zip -r ../function-package.zip .
-            az functionapp deployment source config-zip \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-              --name ${{ secrets.AZURE_FUNCTION_NAME_PROD }} \
-              --src ../function-package.zip
+          app-name: ${{ secrets.AZURE_FUNCTION_NAME_PROD }}
+          package: ${{ env.WORKING_DIRECTORY }}
 
       - name: Azure Logout
         if: always()
