@@ -130,8 +130,7 @@ These numbers are illustrative for the hackathon, but reflect realistic targets 
 - **Maps:** Leaflet
 - **State & Data:** Local mock data (`src/mockData.js`)
 
-This repository focuses on the **experience layer** of the auto‑resolve desk.  
-The backend/agents are represented conceptually (AgroHelpDesk backend folder) and can be wired later to real Azure services.
+This repository focuses on the **experience layer** of the auto‑resolve desk. 
 
 ---
 
