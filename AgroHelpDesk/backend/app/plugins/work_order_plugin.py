@@ -112,10 +112,24 @@ class WorkOrderPlugin:
                 else:
                     # Fallback to local ID
                     work_order_id = f"OS-{uuid.uuid4().hex[:8].upper()}"
-                    logger.warning(
-                        f"⚠️ Cosmos DB API returned HTTP {response.status_code}. "
-                        f"Using local ID: {work_order_id}"
-                    )
+                    
+                    # Log detailed error information
+                    try:
+                        error_body = response.json()
+                        logger.error(
+                            f"❌ Cosmos DB API Error - Status: {response.status_code}\n"
+                            f"   URL: {url}\n"
+                            f"   Response: {error_body}\n"
+                            f"   Using local ID: {work_order_id}"
+                        )
+                    except Exception:
+                        logger.error(
+                            f"❌ Cosmos DB API Error - Status: {response.status_code}\n"
+                            f"   URL: {url}\n"
+                            f"   Response Text: {response.text}\n"
+                            f"   Using local ID: {work_order_id}"
+                        )
+                    
                     return work_order_id
                     
         except httpx.TimeoutException:
