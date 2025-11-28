@@ -47,21 +47,29 @@ class CosmosService:
         """Initialize Cosmos DB service."""
         if not hasattr(self, '_initialized'):
             # Get settings from centralized configuration
-            settings = get_settings()
-            
-            self._endpoint = settings.cosmos_endpoint
-            self._key = settings.cosmos_key
-            self._database_name = settings.cosmos_database_name
-            self._container_name = settings.cosmos_container_name
-            
-            if not self._endpoint:
-                raise ValueError("COSMOS_ENDPOINT is required")
-            
-            self._initialized = True
-            logger.info(
-                f"CosmosService initialized for database '{self._database_name}', "
-                f"container '{self._container_name}'"
-            )
+            try:
+                settings = get_settings()
+                
+                self._endpoint = settings.cosmos_endpoint
+                self._key = settings.cosmos_key
+                self._database_name = settings.cosmos_database_name
+                self._container_name = settings.cosmos_container_name
+                
+                if not self._endpoint:
+                    logger.warning("COSMOS_ENDPOINT is not configured - Cosmos DB will not be available")
+                
+                self._initialized = True
+                logger.info(
+                    f"CosmosService initialized for database '{self._database_name}', "
+                    f"container '{self._container_name}'"
+                )
+            except Exception as e:
+                logger.error(f"Failed to initialize CosmosService: {e}")
+                self._endpoint = None
+                self._key = None
+                self._database_name = "agrodesk"
+                self._container_name = "workorders"
+                self._initialized = True
     
     def _get_client(self) -> CosmosClient:
         """Get or create Cosmos DB client.

@@ -115,12 +115,12 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context) -> None:
         """Post-initialization validation and setup."""
-        # Validate required Cosmos DB configuration
+        # Validate required Cosmos DB configuration (but don't fail hard)
         if not self.cosmos_endpoint:
-            raise ValueError("COSMOS_ENDPOINT is required")
+            logger.warning("COSMOS_ENDPOINT is not configured")
             
         if not self.cosmos_key:
-            raise ValueError("COSMOS_KEY is required")
+            logger.warning("COSMOS_KEY is not configured")
 
         # Set up logging level
         if self.log_level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
@@ -131,7 +131,7 @@ class Settings(BaseSettings):
 
         logger.info("Settings initialized successfully")
         logger.debug(f"Using Key Vault: {self.use_key_vault}")
-        logger.debug(f"Cosmos DB endpoint: {self.cosmos_endpoint}")
+        logger.debug(f"Cosmos DB endpoint: {self.cosmos_endpoint or 'NOT SET'}")
 
 
 # Global settings instance
