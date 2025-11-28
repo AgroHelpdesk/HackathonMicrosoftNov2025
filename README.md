@@ -89,6 +89,9 @@ These runbooks are mocked in the frontend to illustrate decision flows:
 - **RB‑04 – Pre‑fill ART Report (Critical)**  
    Assists with regulatory paperwork, requiring agronomist sign‑off.
 
+- **RB‑05 – Compliance Check (Critical)**  
+   Validates licenses and environmental permits.
+
 ---
 
 ## 📊 Mock Metrics (Business Impact)
