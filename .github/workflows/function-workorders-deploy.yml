@@ -136,7 +136,9 @@ jobs:
                 ENVIRONMENT=development \
                 LOG_LEVEL=INFO \
                 FUNCTIONS_WORKER_RUNTIME=python \
-                FUNCTIONS_EXTENSION_VERSION=~4
+                FUNCTIONS_EXTENSION_VERSION=~4 \
+                COSMOS_DATABASE_NAME=agrodesk \
+                COSMOS_CONTAINER_NAME=workorders
 
       - name: Deploy to Azure Function App
         uses: Azure/functions-action@v1
@@ -197,7 +199,9 @@ jobs:
                 ENVIRONMENT=production \
                 LOG_LEVEL=WARNING \
                 FUNCTIONS_WORKER_RUNTIME=python \
-                FUNCTIONS_EXTENSION_VERSION=~4
+                FUNCTIONS_EXTENSION_VERSION=~4 \
+                COSMOS_DATABASE_NAME=agrodesk \
+                COSMOS_CONTAINER_NAME=workorders
 
       - name: Deploy to Azure Function App
         uses: Azure/functions-action@v1
