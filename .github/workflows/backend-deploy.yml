@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.13'
   WORKING_DIRECTORY: './AgroHelpDesk/backend'
   ARTIFACT_NAME: 'backend-package'
 
@@ -102,7 +102,7 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --settings \
                 WEBSITE_RUN_FROM_PACKAGE=1 \
-                WEBSITE_PYTHON_VERSION=3.12 \
+                WEBSITE_PYTHON_VERSION=3.13 \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
@@ -111,7 +111,7 @@ jobs:
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --linux-fx-version "PYTHON|3.12"
+              --linux-fx-version "PYTHON|3.13"
 
       - name: Wait for App Service restart
         run: sleep 10
@@ -158,7 +158,7 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --settings \
                 WEBSITE_RUN_FROM_PACKAGE=1 \
-                WEBSITE_PYTHON_VERSION=3.12 \
+                WEBSITE_PYTHON_VERSION=3.13 \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
@@ -167,7 +167,7 @@ jobs:
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
-              --linux-fx-version "PYTHON|3.12"
+              --linux-fx-version "PYTHON|3.13"
 
       - name: Wait for App Service restart
         run: sleep 10
