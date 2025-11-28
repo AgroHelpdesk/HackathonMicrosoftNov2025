@@ -4,7 +4,6 @@ This module provides a service layer for interacting with Azure Cosmos DB,
 following best practices for connection management, error handling, and retry logic.
 """
 
-import os
 import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -15,6 +14,7 @@ from azure.cosmos.database import DatabaseProxy
 from azure.identity import DefaultAzureCredential
 
 from models.work_order import WorkOrder, WorkOrderCreate
+from config.settings import get_settings
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -46,14 +46,16 @@ class CosmosService:
     def __init__(self):
         """Initialize Cosmos DB service."""
         if not hasattr(self, '_initialized'):
-            self._endpoint = os.getenv("COSMOS_ENDPOINT")
-            self._key = os.getenv("COSMOS_KEY")
-            self._database_name = os.getenv("COSMOS_DATABASE_NAME", "agrohelpdesk")
-            self._container_name = os.getenv("COSMOS_CONTAINER_NAME", "workorders")
-            self._use_managed_identity = os.getenv("USE_MANAGED_IDENTITY", "false").lower() == "true"
+            # Get settings from centralized configuration
+            settings = get_settings()
+            
+            self._endpoint = settings.cosmos_endpoint
+            self._key = settings.cosmos_key
+            self._database_name = settings.cosmos_database_name
+            self._container_name = settings.cosmos_container_name
             
             if not self._endpoint:
-                raise ValueError("COSMOS_ENDPOINT environment variable is required")
+                raise ValueError("COSMOS_ENDPOINT is required")
             
             self._initialized = True
             logger.info(
@@ -69,24 +71,15 @@ class CosmosService:
         """
         if self._client is None:
             try:
-                if self._use_managed_identity:
-                    # Use managed identity for authentication
-                    credential = DefaultAzureCredential()
-                    self._client = CosmosClient(
-                        url=self._endpoint,
-                        credential=credential
-                    )
-                    logger.info("Connected to Cosmos DB using Managed Identity")
-                else:
-                    # Use key-based authentication
-                    if not self._key:
-                        raise ValueError("COSMOS_KEY is required when not using managed identity")
-                    
-                    self._client = CosmosClient(
-                        url=self._endpoint,
-                        credential=self._key
-                    )
-                    logger.info("Connected to Cosmos DB using access key")
+                # Use key-based authentication
+                if not self._key:
+                    raise ValueError("COSMOS_KEY is required")
+                
+                self._client = CosmosClient(
+                    url=self._endpoint,
+                    credential=self._key
+                )
+                logger.info("Connected to Cosmos DB using access key")
                     
             except Exception as e:
                 logger.error(f"Failed to create Cosmos DB client: {e}")

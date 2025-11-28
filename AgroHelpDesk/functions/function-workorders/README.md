@@ -10,6 +10,8 @@ This Azure Functions app provides serverless HTTP endpoints for creating, queryi
 
 - ✅ **Azure Functions v2** - Latest Python programming model
 - ✅ **Cosmos DB Persistence** - Scalable NoSQL storage
+- ✅ **Azure Key Vault Integration** - Secure secrets management
+- ✅ **Managed Identity Support** - Passwordless authentication
 - ✅ **Pydantic Validation** - Type-safe data models
 - ✅ **Structured Logging** - Application Insights integration
 - ✅ **Error Handling** - Consistent error responses
@@ -26,6 +28,10 @@ function-workorders/
 ├── local.settings.json      # Local settings (gitignored)
 ├── local.settings.example.json  # Settings template
 ├── .funcignore             # Deployment exclusions
+├── config/
+│   ├── __init__.py
+│   ├── settings.py         # Centralized configuration
+│   └── keyvault.py         # Key Vault integration
 ├── models/
 │   ├── __init__.py
 │   └── work_order.py       # Pydantic schemas
@@ -69,6 +75,8 @@ cp local.settings.example.json local.settings.json
 ```
 
 2. **Configure `local.settings.json`**:
+
+#### Option A: Using Environment Variables (Development)
 ```json
 {
   "IsEncrypted": false,
@@ -76,6 +84,7 @@ cp local.settings.example.json local.settings.json
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "USE_KEY_VAULT": "false",
     "COSMOS_ENDPOINT": "https://your-cosmos-account.documents.azure.com:443/",
     "COSMOS_KEY": "your_cosmos_key",
     "COSMOS_DATABASE_NAME": "agrohelpdesk",
@@ -86,6 +95,28 @@ cp local.settings.example.json local.settings.json
   }
 }
 ```
+
+#### Option B: Using Azure Key Vault (Production)
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "USE_KEY_VAULT": "true",
+    "AZURE_KEY_VAULT_URL": "https://your-keyvault.vault.azure.net/",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=...",
+    "LOG_LEVEL": "INFO"
+  }
+}
+```
+
+**Key Vault Setup**: Store these secrets in your Azure Key Vault:
+- `COSMOS-ENDPOINT`
+- `COSMOS-KEY`
+- `COSMOS-DATABASE-NAME`
+- `COSMOS-CONTAINER-NAME`
 
 3. **Create Cosmos DB resources**:
 ```powershell
