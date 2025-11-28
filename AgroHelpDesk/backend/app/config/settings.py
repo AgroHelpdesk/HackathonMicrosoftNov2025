@@ -123,13 +123,6 @@ class Settings(BaseSettings):
         description="Azure Cognitive Search index name",
         alias="AZURE-SEARCH-INDEX-NAME"
     )
-
-    # Session store (Redis) optional
-    REDIS_URL: Optional[str] = Field(
-        default_factory=lambda: _get_secret_or_env("REDIS-URL"),
-        description="Redis connection URL for session storage",
-        alias="REDIS-URL"
-    )
     
     # Azure Functions for Work Orders
     FUNCTIONS_URL: Optional[str] = Field(

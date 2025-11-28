@@ -225,7 +225,6 @@ USE_KEY_VAULT=false  # Set to true in production with Managed Identity
 # Optional - Future Features (Not Currently Used)
 # ACS-ENDPOINT=https://YOUR_RESOURCE.communication.azure.com
 # ACS-ACCESS-KEY=your_acs_access_key_here
-# REDIS-URL=redis://localhost:6379/0
 ```
 
 ### Running Locally
