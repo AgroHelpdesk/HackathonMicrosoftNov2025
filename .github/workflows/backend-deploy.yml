@@ -60,9 +60,9 @@ jobs:
           python -m compileall -q app/
 
       - name: Create clean ZIP package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          cd ${{ env.WORKING_DIRECTORY }}
-          zip -r ../backend.zip * .[^.]*
+          zip -r ../../backend.zip . -x "*.pyc" -x "*__pycache__*" -x "*.pytest_cache*" -x ".venv/*" -x ".env"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
