@@ -29,11 +29,24 @@ app = func.FunctionApp()
 logger = get_logger(__name__)
 
 # Initialize settings (this will also initialize Key Vault if configured)
-settings = get_settings()
-logger.info("Function App initialized with centralized configuration")
+try:
+    settings = get_settings()
+    logger.info("Function App initialized with centralized configuration")
+except Exception as e:
+    logger.error(f"Failed to initialize settings: {e}")
+    # Create minimal settings to allow health check to work
+    settings = None
 
 # Initialize Cosmos Service (singleton)
-cosmos_service = CosmosService()
+try:
+    if settings:
+        cosmos_service = CosmosService()
+    else:
+        logger.warning("Cosmos Service not initialized due to settings error")
+        cosmos_service = None
+except Exception as e:
+    logger.error(f"Failed to initialize Cosmos Service: {e}")
+    cosmos_service = None
 
 
 @app.route(
@@ -429,19 +442,31 @@ async def health_check(req: func.HttpRequest) -> func.HttpResponse:
     }
     """
     # Get configuration status
-    current_settings = get_settings()
-    configuration_status = {
-        "key_vault": "enabled" if current_settings.use_key_vault else "disabled",
-        "cosmos_db": "connected" if cosmos_service._client else "not_initialized"
-    }
-    
-    return func.HttpResponse(
-        **build_success_response(
-            data={
-                "status": "healthy",
-                "service": "agrohelpdesk-functions",
-                "version": "1.0.0",
-                "configuration": configuration_status
-            }
+    try:
+        current_settings = get_settings() if settings else None
+        configuration_status = {
+            "key_vault": "enabled" if current_settings and current_settings.use_key_vault else "disabled",
+            "cosmos_db": "connected" if cosmos_service and cosmos_service._client else "not_initialized",
+            "settings_loaded": settings is not None
+        }
+        
+        return func.HttpResponse(
+            **build_success_response(
+                data={
+                    "status": "healthy",
+                    "service": "agrohelpdesk-functions",
+                    "version": "1.0.0",
+                    "configuration": configuration_status
+                }
+            )
         )
-    )
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return func.HttpResponse(
+            status_code=500,
+            body=json.dumps({
+                "success": False,
+                "error": f"Health check failed: {str(e)}"
+            }),
+            mimetype="application/json"
+        )
