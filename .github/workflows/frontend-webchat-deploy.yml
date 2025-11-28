@@ -45,6 +45,16 @@ jobs:
         run: |
           npm ci
 
+      - name: Configure environment variables
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Use backend URL from secret
+          BACKEND_URL="${{ secrets.AZURE_WEBAPP_URL }}"
+          
+          echo "REACT_APP_API_URL=$BACKEND_URL" > .env.production
+          echo "Configured backend URL: $BACKEND_URL"
+          cat .env.production
+
       - name: Type check
         working-directory: ${{ env.WORKING_DIRECTORY }}
         continue-on-error: true
