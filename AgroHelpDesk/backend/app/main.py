@@ -57,14 +57,10 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 
 # CORS Configuration
+frontend_urls = [url.strip() for url in settings.FRONTEND_URLS.split(",") if url.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001"
-    ],
+    allow_origins=frontend_urls,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

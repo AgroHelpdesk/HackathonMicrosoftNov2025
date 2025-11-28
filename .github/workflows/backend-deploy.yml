@@ -117,7 +117,8 @@ jobs:
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
-                LOG_LEVEL=INFO
+                LOG_LEVEL=INFO \
+                FRONTEND_URLS="https://${{ secrets.AZURE_STORAGE_ACCOUNT_DEV }}.z13.web.core.windows.net,http://localhost:3000,http://127.0.0.1:3000"
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
@@ -177,7 +178,8 @@ jobs:
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
-                LOG_LEVEL=WARNING
+                LOG_LEVEL=WARNING \
+                FRONTEND_URLS="https://${{ secrets.AZURE_STORAGE_ACCOUNT_PROD }}.z13.web.core.windows.net"
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \

@@ -136,7 +136,7 @@ class Settings(BaseSettings):
         alias="FUNCTIONS-KEY"
     )
 
-    # Application settings
+    # Application Configuration
     ENVIRONMENT: str = Field(
         default="development", 
         description="Application environment"
@@ -145,6 +145,16 @@ class Settings(BaseSettings):
         default="INFO", 
         description="Logging level",
         alias="LOG-LEVEL"
+    )
+    
+    # CORS Configuration
+    FRONTEND_URLS: str = Field(
+        default_factory=lambda: _get_secret_or_env(
+            "FRONTEND-URLS", 
+            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
+        ),
+        description="Comma-separated list of allowed frontend URLs for CORS",
+        alias="FRONTEND-URLS"
     )
 
     model_config = SettingsConfigDict(
