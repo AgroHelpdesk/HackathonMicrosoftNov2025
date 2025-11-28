@@ -11,7 +11,7 @@ export const TICKETS = [
     id: 'T-001',
     type: 'Field Diagnosis',
     summary: 'Leaf photos with spots, possible fungus',
-    channel: 'WhatsApp',
+    channel: 'Microsoft Teams',
     location: 'Plot 22',
     crop: 'Soybean',
     stage: 'V5',
