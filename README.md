@@ -18,7 +18,7 @@ Most calls are low‑complexity, but still consume agronomists’ time and delay
 
 ---
 
-## 🚀 Main Capabilities (Frontend Demo)
+## 🚀 Main Capabilities 
 
 - **Agent‑Aware Dashboard**
    - List of tickets with status, channel (Teams, WhatsApp, ERP), crop, and location.
