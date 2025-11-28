@@ -78,7 +78,7 @@ class Settings(BaseSettings):
 
     # Key Vault configuration
     use_key_vault: bool = Field(
-        default=False,
+        default_factory=lambda: os.getenv("USE_KEY_VAULT", "false").lower() in ("true", "1", "yes"),
         description="Enable Azure Key Vault for secrets management"
     )
     
