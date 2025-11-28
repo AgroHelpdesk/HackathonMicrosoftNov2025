@@ -119,9 +119,9 @@ class Settings(BaseSettings):
         alias="AZURE-SEARCH-KEY"
     )
     AZURE_SEARCH_INDEX_NAME: Optional[str] = Field(
-        default_factory=lambda: _get_secret_or_env("AZURE-SEARCH-INDEX"),
+        default_factory=lambda: _get_secret_or_env("AZURE-SEARCH-INDEX-NAME"),
         description="Azure Cognitive Search index name",
-        alias="AZURE-SEARCH-INDEX"
+        alias="AZURE-SEARCH-INDEX-NAME"
     )
 
     # Session store (Redis) optional
