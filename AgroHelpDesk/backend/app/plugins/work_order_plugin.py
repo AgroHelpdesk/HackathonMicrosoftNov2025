@@ -4,7 +4,6 @@ This plugin provides work order creation and management capabilities.
 Now with Cosmos DB persistence via Azure Functions (direct HTTP calls).
 """
 
-import os
 import uuid
 import asyncio
 from datetime import datetime
@@ -13,6 +12,7 @@ from typing import Annotated, Dict, Any, Optional
 import httpx
 from semantic_kernel.functions import kernel_function
 
+from app.config import settings
 from app.utils.logger import get_logger
 
 logger = get_logger("work_order_plugin")
@@ -26,8 +26,8 @@ class WorkOrderPlugin:
     
     def __init__(self):
         """Initialize the plugin with Azure Functions configuration."""
-        self.functions_url = os.getenv("FUNCTIONS_URL", "http://localhost:7071").rstrip("/")
-        self.function_key = os.getenv("FUNCTIONS_KEY")
+        self.functions_url = settings.FUNCTIONS_URL.rstrip("/") if settings.FUNCTIONS_URL else "http://localhost:7071"
+        self.function_key = settings.FUNCTIONS_KEY if hasattr(settings, 'FUNCTIONS_KEY') else None
         self.timeout = 30.0
         logger.info(f"WorkOrderPlugin initialized with Functions URL: {self.functions_url}")
     
