@@ -23,9 +23,9 @@ env:
 
 jobs:
 
-  # -----------------------------
+  # =======================================
   # BUILD JOB
-  # -----------------------------
+  # =======================================
   build:
     runs-on: ubuntu-latest
 
@@ -60,10 +60,9 @@ jobs:
           python -m compileall -q app/
 
       - name: Create clean ZIP package
-        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          # ZIP gerado sempre na raiz do repositório
-          zip -r ../../backend.zip ./*
+          cd ${{ env.WORKING_DIRECTORY }}
+          zip -r ../backend.zip * .[^.]*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -71,10 +70,9 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: backend.zip
 
-
-  # -----------------------------
-  # DEPLOY DEVELOPMENT
-  # -----------------------------
+  # =======================================
+  # DEPLOY DEV
+  # =======================================
   deploy-dev:
     runs-on: ubuntu-latest
     needs: build
@@ -103,9 +101,10 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --settings \
+                WEBSITE_RUN_FROM_PACKAGE=1 \
+                WEBSITE_PYTHON_VERSION=3.12 \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
-                WEBSITE_RUN_FROM_PACKAGE=1 \
                 ENVIRONMENT=development \
                 LOG_LEVEL=INFO
 
@@ -113,6 +112,9 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --linux-fx-version "PYTHON|3.12"
+
+      - name: Wait for App Service restart
+        run: sleep 10
 
       - name: Deploy ZIP Package
         uses: azure/webapps-deploy@v3
@@ -124,10 +126,9 @@ jobs:
         if: always()
         run: az logout
 
-
-  # -----------------------------
-  # DEPLOY PRODUCTION
-  # -----------------------------
+  # =======================================
+  # DEPLOY PROD
+  # =======================================
   deploy-prod:
     runs-on: ubuntu-latest
     needs: build
@@ -156,9 +157,10 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --settings \
+                WEBSITE_RUN_FROM_PACKAGE=1 \
+                WEBSITE_PYTHON_VERSION=3.12 \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
-                WEBSITE_RUN_FROM_PACKAGE=1 \
                 ENVIRONMENT=production \
                 LOG_LEVEL=WARNING
 
@@ -166,6 +168,9 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --linux-fx-version "PYTHON|3.12"
+
+      - name: Wait for App Service restart
+        run: sleep 10
 
       - name: Deploy ZIP Package
         uses: azure/webapps-deploy@v3
