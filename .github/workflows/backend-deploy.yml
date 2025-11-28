@@ -106,7 +106,8 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
-      - name: Deploy with Kudu ZipDeploy API
+      - name: Get deployment credentials
+        id: get-credentials
         uses: azure/cli@v2
         with:
           inlineScript: |
@@ -121,12 +122,19 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --query publishingPassword -o tsv)
             
-            # Deploy using Kudu API with build flag
-            curl -X POST \
-              -u "$USERNAME:$PASSWORD" \
-              -H "Content-Type: application/zip" \
-              --data-binary @deploy.zip \
-              https://${{ secrets.AZURE_WEBAPP_NAME_DEV }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
+            # Export credentials as output (masked)
+            echo "::add-mask::$USERNAME"
+            echo "::add-mask::$PASSWORD"
+            echo "username=$USERNAME" >> $GITHUB_OUTPUT
+            echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Deploy with Kudu ZipDeploy API
+        run: |
+          curl -X POST \
+            -u "${{ steps.get-credentials.outputs.username }}:${{ steps.get-credentials.outputs.password }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @deploy.zip \
+            https://${{ secrets.AZURE_WEBAPP_NAME_DEV }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
@@ -179,7 +187,8 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: zip -r ../../deploy.zip .
 
-      - name: Deploy with Kudu ZipDeploy API
+      - name: Get deployment credentials
+        id: get-credentials
         uses: azure/cli@v2
         with:
           inlineScript: |
@@ -194,12 +203,19 @@ jobs:
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --query publishingPassword -o tsv)
             
-            # Deploy using Kudu API with build flag
-            curl -X POST \
-              -u "$USERNAME:$PASSWORD" \
-              -H "Content-Type: application/zip" \
-              --data-binary @deploy.zip \
-              https://${{ secrets.AZURE_WEBAPP_NAME_PROD }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
+            # Export credentials as output (masked)
+            echo "::add-mask::$USERNAME"
+            echo "::add-mask::$PASSWORD"
+            echo "username=$USERNAME" >> $GITHUB_OUTPUT
+            echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Deploy with Kudu ZipDeploy API
+        run: |
+          curl -X POST \
+            -u "${{ steps.get-credentials.outputs.username }}:${{ steps.get-credentials.outputs.password }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @deploy.zip \
+            https://${{ secrets.AZURE_WEBAPP_NAME_PROD }}.scm.azurewebsites.net/api/zipdeploy?isAsync=true
 
       - name: Azure Logout
         if: always()
