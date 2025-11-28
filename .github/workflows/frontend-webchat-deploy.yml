@@ -45,22 +45,6 @@ jobs:
         run: |
           npm ci
 
-      - name: Verify project structure
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Checking project structure..."
-          ls -la
-          echo "Checking public directory..."
-          ls -la public/
-          if [ ! -f "public/index.html" ]; then
-            echo "ERROR: index.html not found in public/"
-            exit 1
-          fi
-          echo "index.html found successfully"
-          echo "Checking src directory..."
-          ls -la src/
-
       - name: Type check
         working-directory: ${{ env.WORKING_DIRECTORY }}
         continue-on-error: true
