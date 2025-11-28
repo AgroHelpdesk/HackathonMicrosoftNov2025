@@ -2,7 +2,16 @@
 
 Modern React frontend (Vite + Material UI) that demonstrates an **auto‑resolve service desk for agribusiness**, built for the **Microsoft Hackathon – Innovation Studio, Nov 2025**.
 
+### Operator Dashboard – Web Frontend (Control Center)
+
+This is the **operator and supervisor view**, focused on monitoring and governance.
+
 ![Screen Workflow](assets/Screen.png)
+
+### Customer Chat – AgroHelpDesk Webchat (Farmer View)
+This is the customer‑facing chat application, used by farmers and field operators on web or mobile.
+
+![Customer Service Chat](assets/CustomerScreen.jpg)
 
 ## 💡 Problem & Vision
 
