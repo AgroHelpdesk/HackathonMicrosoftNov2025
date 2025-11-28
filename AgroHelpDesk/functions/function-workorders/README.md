@@ -375,7 +375,7 @@ az functionapp config appsettings set \
   --settings \
     COSMOS_ENDPOINT=https://your-cosmos.documents.azure.com:443/ \
     COSMOS_KEY=your_key \
-    COSMOS_DATABASE_NAME=agrohelpdesk \
+    COSMOS_DATABASE_NAME=agrodesk \
     COSMOS_CONTAINER_NAME=workorders
 
 # Deploy
