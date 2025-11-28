@@ -127,12 +127,6 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
-            # Remove WEBSITE_RUN_FROM_PACKAGE to force full deployment
-            az functionapp config appsettings delete \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
-              --name ${{ secrets.AZURE_FUNCTION_NAME_DEV }} \
-              --setting-names WEBSITE_RUN_FROM_PACKAGE || true
-            
             az functionapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_FUNCTION_NAME_DEV }} \
@@ -142,15 +136,22 @@ jobs:
                 ENVIRONMENT=development \
                 LOG_LEVEL=INFO \
                 FUNCTIONS_WORKER_RUNTIME=python \
-                FUNCTIONS_EXTENSION_VERSION=~4 \
-                ENABLE_ORYX_BUILD=true \
-                SCM_DO_BUILD_DURING_DEPLOYMENT=true
+                FUNCTIONS_EXTENSION_VERSION=~4
 
       - name: Deploy to Azure Function App
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTION_NAME_DEV }}
           package: ${{ env.WORKING_DIRECTORY }}
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
+      
+      - name: Sync triggers after deployment
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az rest --method POST \
+              --url "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP_DEV }}/providers/Microsoft.Web/sites/${{ secrets.AZURE_FUNCTION_NAME_DEV }}/syncfunctiontriggers?api-version=2022-03-01"
 
       - name: Azure Logout
         if: always()
@@ -187,12 +188,6 @@ jobs:
         uses: azure/cli@v2
         with:
           inlineScript: |
-            # Remove WEBSITE_RUN_FROM_PACKAGE to force full deployment
-            az functionapp config appsettings delete \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-              --name ${{ secrets.AZURE_FUNCTION_NAME_PROD }} \
-              --setting-names WEBSITE_RUN_FROM_PACKAGE || true
-            
             az functionapp config appsettings set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_FUNCTION_NAME_PROD }} \
@@ -202,15 +197,22 @@ jobs:
                 ENVIRONMENT=production \
                 LOG_LEVEL=WARNING \
                 FUNCTIONS_WORKER_RUNTIME=python \
-                FUNCTIONS_EXTENSION_VERSION=~4 \
-                ENABLE_ORYX_BUILD=true \
-                SCM_DO_BUILD_DURING_DEPLOYMENT=true
+                FUNCTIONS_EXTENSION_VERSION=~4
 
       - name: Deploy to Azure Function App
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTION_NAME_PROD }}
           package: ${{ env.WORKING_DIRECTORY }}
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
+      
+      - name: Sync triggers after deployment
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az rest --method POST \
+              --url "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP_PROD }}/providers/Microsoft.Web/sites/${{ secrets.AZURE_FUNCTION_NAME_PROD }}/syncfunctiontriggers?api-version=2022-03-01"
 
       - name: Azure Logout
         if: always()
