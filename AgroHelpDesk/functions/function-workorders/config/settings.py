@@ -102,7 +102,7 @@ class Settings(BaseSettings):
     )
     
     cosmos_database_name: str = Field(
-        default="agrohelpdesk",
+        default="agrodesk",
         description="Cosmos DB database name"
     )
     
