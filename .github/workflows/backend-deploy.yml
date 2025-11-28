@@ -59,17 +59,6 @@ jobs:
           python -m py_compile app/main.py
           python -m compileall -q app/
 
-      - name: Create clean ZIP package
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          zip -r ../../backend.zip . -x "*.pyc" -x "*__pycache__*" -x "*.pytest_cache*" -x ".venv/*" -x ".env"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: backend.zip
-
   # =======================================
   # DEPLOY DEV
   # =======================================
@@ -81,10 +70,8 @@ jobs:
       name: Development
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -101,8 +88,7 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --settings \
-                WEBSITE_RUN_FROM_PACKAGE=1 \
-                WEBSITE_PYTHON_VERSION=3.13 \
+                SCM_DO_BUILD_DURING_DEPLOYMENT=true \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
@@ -111,16 +97,16 @@ jobs:
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --linux-fx-version "PYTHON|3.13"
+              --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
       - name: Wait for App Service restart
         run: sleep 10
 
-      - name: Deploy ZIP Package
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
-          package: backend.zip
+          package: ${{ env.WORKING_DIRECTORY }}
 
       - name: Azure Logout
         if: always()
@@ -137,10 +123,8 @@ jobs:
       name: Production
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -157,8 +141,7 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --settings \
-                WEBSITE_RUN_FROM_PACKAGE=1 \
-                WEBSITE_PYTHON_VERSION=3.13 \
+                SCM_DO_BUILD_DURING_DEPLOYMENT=true \
                 USE_KEY_VAULT=true \
                 AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
@@ -167,16 +150,16 @@ jobs:
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
-              --linux-fx-version "PYTHON|3.13"
+              --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
       - name: Wait for App Service restart
         run: sleep 10
 
-      - name: Deploy ZIP Package
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
-          package: backend.zip
+          package: ${{ env.WORKING_DIRECTORY }}
 
       - name: Azure Logout
         if: always()
