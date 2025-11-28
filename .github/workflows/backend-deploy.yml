@@ -114,15 +114,15 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
               --settings \
-                USE-KEY-VAULT=true \
-                AZURE-KEY-VAULT-URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
+                USE_KEY_VAULT=true \
+                AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=development \
-                LOG-LEVEL=INFO
+                LOG_LEVEL=INFO
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_DEV }} \
-              --startup-file "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+              --startup-file "/home/site/wwwroot/antenv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -174,10 +174,10 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
               --name ${{ secrets.AZURE_WEBAPP_NAME_PROD }} \
               --settings \
-                USE-KEY-VAULT=true \
-                AZURE-KEY-VAULT-URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
+                USE_KEY_VAULT=true \
+                AZURE_KEY_VAULT_URL=https://${{ secrets.AZURE_KEYVAULT_NAME }}.vault.azure.net/ \
                 ENVIRONMENT=production \
-                LOG-LEVEL=WARNING
+                LOG_LEVEL=WARNING
 
             az webapp config set \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
